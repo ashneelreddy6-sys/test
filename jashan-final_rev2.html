@@ -1,0 +1,2319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Jashan's Birthday * 22 — FINAL</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap');
+
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+body{
+  background:#000;color:#fff;
+  font-family:'VT323',monospace;
+  overflow:hidden;width:100vw;height:100vh;
+  display:flex;align-items:center;justify-content:center;
+  user-select:none;
+}
+#game{
+  position:relative;
+  width:min(640px,100vw);
+  height:min(720px,100vh);
+  background:#000;overflow:hidden;
+  display:flex;flex-direction:column;
+  border:1px solid #111;
+}
+
+/* TITLE */
+#title-screen{
+  position:absolute;inset:0;background:#000;
+  display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  z-index:50;cursor:pointer;text-align:center;padding:20px;
+}
+.title-name{
+  font-family:'Press Start 2P',monospace;
+  font-size:clamp(14px,3.5vw,28px);color:#fff;
+  letter-spacing:2px;margin-bottom:8px;
+  text-shadow:0 0 8px rgba(255,255,255,0.4);
+  animation:titleGlow 2s ease-in-out infinite alternate;
+}
+@keyframes titleGlow{
+  from{text-shadow:0 0 4px rgba(255,255,255,0.3);}
+  to{text-shadow:0 0 16px rgba(255,255,255,0.7),0 0 24px rgba(255,209,80,0.3);}
+}
+.title-sub{
+  font-family:'VT323',monospace;
+  font-size:clamp(14px,2.5vw,22px);color:#bbb;
+  margin-bottom:60px;letter-spacing:1px;
+}
+.title-press{
+  font-family:'Press Start 2P',monospace;
+  font-size:clamp(7px,1.5vw,11px);color:#ffd166;
+  animation:blink 1s step-end infinite;
+}
+@keyframes blink{0%,100%{opacity:1;}50%{opacity:0;}}
+.title-credit{
+  position:absolute;bottom:20px;
+  font-family:'Press Start 2P',monospace;
+  font-size:8px;color:#444;letter-spacing:2px;
+}
+.title-heart{margin-bottom:14px;animation:heartbeat 1s ease-in-out infinite;}
+@keyframes heartbeat{
+  0%,100%{transform:scale(1);}
+  20%{transform:scale(1.15);}
+  40%{transform:scale(0.95);}
+  60%{transform:scale(1.1);}
+}
+
+/* SCENE */
+#scene-area{flex:1;position:relative;background:#000;overflow:hidden;}
+#scene-content{width:100%;height:100%;position:relative;}
+.bg-stars{position:absolute;inset:0;pointer-events:none;}
+.bg-star{
+  position:absolute;width:2px;height:2px;background:#fff;
+  animation:twinkle 2s ease-in-out infinite alternate;
+}
+@keyframes twinkle{from{opacity:0.2;}to{opacity:1;}}
+
+/* SPRITES */
+.sprite-container{
+  position:absolute;
+  display:flex;flex-direction:column;align-items:center;
+  animation:spriteIn 0.4s ease;
+  transform:translate(-50%,-50%);
+}
+@keyframes spriteIn{
+  from{opacity:0;transform:translate(-50%,-50%) translateY(10px);}
+  to{opacity:1;transform:translate(-50%,-50%) translateY(0);}
+}
+.sprite-bounce{animation:spriteBounce 0.8s ease-in-out infinite alternate;}
+@keyframes spriteBounce{
+  from{transform:translate(-50%,-50%) translateY(0);}
+  to{transform:translate(-50%,-50%) translateY(-6px);}
+}
+.sprite-shake{animation:spriteShake 0.4s ease;}
+@keyframes spriteShake{
+  0%,100%{transform:translate(-50%,-50%);}
+  25%{transform:translate(calc(-50% - 4px),-50%);}
+  75%{transform:translate(calc(-50% + 4px),-50%);}
+}
+.pixel-sprite{
+  image-rendering:pixelated;
+  image-rendering:-moz-crisp-edges;
+  image-rendering:crisp-edges;
+  filter:drop-shadow(0 4px 0 rgba(0,0,0,0.4));
+}
+.sprite-name{
+  font-family:'Press Start 2P',monospace;
+  font-size:clamp(7px,1.4vw,10px);
+  color:#fff;margin-top:10px;letter-spacing:1px;text-align:center;
+}
+
+/* DIALOG */
+#dialog-box{
+  background:#000;border:3px solid #fff;
+  margin:8px;padding:14px 18px;
+  min-height:120px;position:relative;flex-shrink:0;
+}
+#dialog-speaker{
+  font-family:'Press Start 2P',monospace;
+  font-size:clamp(7px,1.4vw,10px);color:#ffd166;
+  margin-bottom:10px;letter-spacing:1px;
+}
+#dialog-text{
+  font-family:'VT323',monospace;
+  font-size:clamp(16px,2.4vw,22px);
+  color:#fff;line-height:1.4;letter-spacing:0.5px;
+  min-height:60px;white-space:pre-wrap;
+}
+#dialog-arrow{
+  position:absolute;bottom:6px;right:14px;
+  color:#fff;font-size:18px;display:none;
+  animation:arrowBounce 0.5s ease-in-out infinite alternate;
+}
+@keyframes arrowBounce{from{transform:translateY(0);}to{transform:translateY(3px);}}
+
+/* CHOICES */
+#choices-box{
+  display:none;flex-direction:column;gap:6px;margin-top:8px;
+}
+.choice{
+  font-family:'VT323',monospace;
+  font-size:clamp(15px,2.2vw,20px);color:#fff;
+  padding:6px 10px 6px 32px;cursor:pointer;
+  position:relative;background:transparent;
+  border:none;text-align:left;letter-spacing:0.5px;
+  transition:color 0.1s;
+}
+.choice::before{
+  content:'';position:absolute;left:12px;top:50%;
+  transform:translateY(-50%);
+  width:14px;height:14px;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 7 7' shape-rendering='crispEdges'%3E%3Cpath fill='%23ff5050' d='M1 1h2v1H1zM4 1h2v1H4zM0 2h7v1H0zM0 3h7v1H0zM1 4h5v1H1zM2 5h3v1H2zM3 6h1v1H3z'/%3E%3C/svg%3E");
+  background-size:contain;background-repeat:no-repeat;
+  opacity:0;image-rendering:pixelated;
+}
+.choice:hover,.choice.selected{color:#ffd166;}
+.choice:hover::before,.choice.selected::before{opacity:1;}
+
+/* TYPE */
+#type-box{display:none;margin-top:10px;}
+#type-input{
+  font-family:'VT323',monospace;
+  font-size:clamp(15px,2.2vw,20px);
+  background:#000;color:#ffd166;
+  border:2px solid #fff;padding:6px 10px;
+  width:100%;outline:none;letter-spacing:1px;
+}
+#type-input:focus{border-color:#ffd166;}
+#type-submit{
+  font-family:'Press Start 2P',monospace;
+  font-size:clamp(7px,1.4vw,10px);
+  background:#ffd166;color:#000;border:none;
+  padding:8px 16px;margin-top:8px;cursor:pointer;letter-spacing:1px;
+}
+#type-submit:hover{background:#fff;}
+
+/* HUD */
+#hud{
+  position:absolute;top:0;left:0;right:0;
+  padding:6px 10px;display:flex;
+  justify-content:space-between;z-index:10;
+  pointer-events:none;
+  font-family:'Press Start 2P',monospace;
+  font-size:clamp(6px,1.2vw,9px);color:#fff;letter-spacing:1px;
+}
+.hud-item{
+  background:rgba(0,0,0,0.6);padding:4px 8px;
+  border:1px solid rgba(255,255,255,0.3);
+}
+.hud-item .gold{color:#ffd166;}
+#hp-bar{display:flex;align-items:center;gap:6px;font-family:'Press Start 2P',monospace;font-size:8px;}
+#hp-bar-bg{width:80px;height:14px;background:#660000;border:1px solid #fff;position:relative;}
+#hp-bar-fill{height:100%;background:#ffd166;width:100%;transition:width 0.4s;}
+
+/* MINIGAME */
+#mg-box{
+  display:none;position:absolute;inset:0;
+  background:#000;flex-direction:column;
+  align-items:center;justify-content:center;
+  z-index:30;padding:20px;
+}
+.mg-title{
+  font-family:'Press Start 2P',monospace;
+  font-size:clamp(8px,1.8vw,12px);color:#ffd166;
+  text-align:center;margin-bottom:20px;letter-spacing:1px;line-height:1.8;
+}
+.mg-arena{
+  width:min(360px,90%);height:200px;
+  border:3px solid #fff;background:#000;
+  position:relative;overflow:hidden;margin-bottom:16px;
+}
+.mg-status{
+  font-family:'Press Start 2P',monospace;
+  font-size:clamp(7px,1.4vw,10px);color:#fff;
+  text-align:center;margin-bottom:14px;letter-spacing:1px;line-height:1.8;
+}
+.mg-btn{
+  font-family:'Press Start 2P',monospace;
+  font-size:clamp(7px,1.4vw,10px);
+  background:transparent;color:#fff;
+  border:2px solid #fff;padding:8px 16px;
+  cursor:pointer;letter-spacing:1px;margin:0 4px;
+}
+.mg-btn:hover{background:#fff;color:#000;}
+
+/* BOSS BATTLE */
+#battle-box{
+  display:none;position:absolute;inset:0;
+  background:#000;flex-direction:column;
+  z-index:30;padding:14px;overflow:hidden;
+}
+#battle-enemy{
+  flex:1;display:flex;align-items:center;justify-content:center;
+  position:relative;min-height:200px;
+}
+#battle-enemy-name{
+  position:absolute;top:6px;left:50%;
+  transform:translateX(-50%);
+  font-family:'Press Start 2P',monospace;
+  font-size:clamp(7px,1.6vw,11px);color:#ff5050;letter-spacing:1px;
+}
+#battle-enemy-hp{
+  position:absolute;top:30px;left:50%;
+  transform:translateX(-50%);display:flex;gap:6px;align-items:center;
+  font-family:'Press Start 2P',monospace;font-size:8px;color:#fff;
+}
+#battle-enemy-hp-bg{
+  width:140px;height:14px;background:#330000;
+  border:2px solid #fff;
+}
+#battle-enemy-hp-fill{
+  height:100%;background:#ff5050;width:100%;transition:width 0.5s;
+}
+#battle-dialog{
+  border:3px solid #fff;padding:10px 14px;
+  margin-bottom:10px;min-height:60px;
+  font-family:'VT323',monospace;
+  font-size:clamp(15px,2.2vw,20px);color:#fff;
+  line-height:1.4;
+}
+#battle-jashan-info{
+  display:flex;justify-content:space-between;
+  align-items:center;
+  border-top:2px solid #fff;border-bottom:2px solid #fff;
+  padding:6px 10px;margin-bottom:10px;
+  font-family:'Press Start 2P',monospace;font-size:8px;color:#fff;
+}
+.j-stat{display:flex;align-items:center;gap:4px;}
+.j-stat .gold{color:#ffd166;}
+.j-hp-bg{width:80px;height:12px;background:#003300;border:1px solid #fff;}
+.j-hp-fill{height:100%;background:#00ff66;width:100%;}
+#battle-actions{
+  display:grid;grid-template-columns:1fr 1fr;
+  gap:6px;margin-bottom:6px;
+}
+.battle-btn{
+  font-family:'Press Start 2P',monospace;
+  font-size:clamp(7px,1.4vw,10px);
+  background:transparent;color:#fff;
+  border:2px solid #fff;padding:10px;
+  cursor:pointer;letter-spacing:1px;
+  text-align:left;
+  display:flex;align-items:center;gap:8px;
+}
+.battle-btn:hover:not(:disabled){background:#fff;color:#000;}
+.battle-btn:disabled{opacity:0.5;cursor:not-allowed;}
+.battle-btn .b-icon{font-size:14px;}
+
+/* DAMAGE NUMBERS */
+.dmg-num{
+  position:absolute;
+  font-family:'Press Start 2P',monospace;
+  font-size:18px;
+  font-weight:bold;
+  pointer-events:none;
+  animation:dmgRise 1s ease-out forwards;
+  z-index:100;
+}
+@keyframes dmgRise{
+  0%{opacity:1;transform:translateY(0) scale(1);}
+  100%{opacity:0;transform:translateY(-60px) scale(1.5);}
+}
+.dmg-yellow{color:#ffd166;text-shadow:2px 2px 0 #c47a2b;}
+.dmg-red{color:#ff5050;text-shadow:2px 2px 0 #800000;}
+.dmg-miss{color:#88ccff;text-shadow:2px 2px 0 #224488;}
+
+/* PARTICLES */
+.ptcl{
+  position:absolute;pointer-events:none;
+  animation:ptclA var(--d,0.8s) ease-out forwards;
+  width:6px;height:6px;image-rendering:pixelated;
+}
+@keyframes ptclA{
+  from{opacity:1;transform:translate(0,0) scale(1);}
+  to{opacity:0;transform:translate(var(--dx),var(--dy)) scale(0.4);}
+}
+
+/* FINALE */
+#finale{
+  display:none;position:absolute;inset:0;
+  background:#000;z-index:40;overflow-y:auto;
+  padding:20px 16px;cursor:default;
+}
+.fin-title{
+  font-family:'Press Start 2P',monospace;
+  font-size:clamp(10px,2.2vw,14px);color:#ffd166;
+  text-align:center;margin-bottom:14px;line-height:1.8;letter-spacing:1px;
+}
+.fin-stars{
+  text-align:center;margin:10px 0;
+  display:flex;justify-content:center;gap:8px;flex-wrap:wrap;
+}
+.fin-section{
+  border:2px solid #fff;padding:12px 14px;
+  margin:0 auto 14px;max-width:560px;background:#000;
+}
+.fin-section h2{
+  font-family:'Press Start 2P',monospace;
+  font-size:clamp(8px,1.6vw,11px);color:#ffd166;
+  margin-bottom:10px;letter-spacing:1px;
+  border-bottom:1px solid #fff;padding-bottom:6px;
+}
+.fin-section p,.fin-section li{
+  font-family:'VT323',monospace;
+  font-size:clamp(14px,2vw,18px);color:#fff;
+  line-height:1.6;margin-bottom:6px;
+}
+.fin-section ul{padding-left:18px;}
+.fill{background:#ffd166;color:#000;padding:1px 6px;font-weight:bold;}
+.fin-stat-row{
+  display:flex;justify-content:space-between;
+  border-bottom:1px dotted #444;padding:4px 0;
+  font-family:'VT323',monospace;
+  font-size:clamp(13px,1.8vw,17px);
+}
+.fin-stat-row span:last-child{color:#ffd166;}
+.fin-btn{
+  display:block;margin:14px auto 0;
+  font-family:'Press Start 2P',monospace;
+  font-size:clamp(7px,1.4vw,10px);
+  background:transparent;color:#ffd166;
+  border:2px solid #ffd166;padding:10px 18px;
+  cursor:pointer;letter-spacing:1px;
+}
+.fin-btn:hover{background:#ffd166;color:#000;}
+.fin-credit{
+  text-align:center;
+  font-family:'Press Start 2P',monospace;
+  font-size:8px;color:#666;letter-spacing:2px;
+  margin:14px 0 30px;line-height:2;
+}
+
+/* PROGRESS DOTS */
+#progress-dots{
+  position:absolute;bottom:8px;left:50%;
+  transform:translateX(-50%);display:flex;gap:5px;
+  z-index:5;pointer-events:none;opacity:0.5;
+}
+.pdot{width:6px;height:6px;background:#444;}
+.pdot.active{background:#ffd166;}
+.pdot.done{background:#888;}
+
+/* FADE */
+.fade-overlay{
+  position:absolute;inset:0;background:#000;
+  z-index:25;pointer-events:none;
+  opacity:0;transition:opacity 0.4s;
+}
+.fade-overlay.active{opacity:1;}
+
+/* SCREEN SHAKE */
+.shake{animation:shakeScreen 0.4s ease;}
+@keyframes shakeScreen{
+  0%,100%{transform:translate(0,0);}
+  20%{transform:translate(-3px,2px);}
+  40%{transform:translate(3px,-2px);}
+  60%{transform:translate(-2px,3px);}
+  80%{transform:translate(2px,-3px);}
+}
+
+@keyframes floaterAnim{
+  from{opacity:1;transform:translateX(-50%) translateY(0);}
+  to{opacity:0;transform:translateX(-50%) translateY(-30px);}
+}
+
+/* RHYTHM ARROWS */
+.rhythm-arrow{
+  position:absolute;
+  font-family:'Press Start 2P',monospace;
+  font-size:32px;color:#ffd166;
+  animation:rhythmFall 2s linear forwards;
+}
+@keyframes rhythmFall{
+  from{top:-40px;}
+  to{top:200px;}
+}
+</style>
+</head>
+<body>
+
+<div id="game">
+
+  <div id="title-screen" onclick="startGame()">
+    <div class="title-heart">
+      <svg width="48" height="42" viewBox="0 0 12 11" shape-rendering="crispEdges">
+        <path fill="#ff3838" d="M2 1h2v1H2zM6 1h2v1H6zM1 2h4v1H1zM5 2h-1zM7 2h4v1H7zM1 3h10v1H1zM1 4h10v1H1zM2 5h8v1H2zM3 6h6v1H3zM4 7h4v1H4zM5 8h2v1H5zM6 9h0v1z"/>
+      </svg>
+    </div>
+    <div class="title-name">JASHAN</div>
+    <div class="title-sub">* 22 *</div>
+    <div class="title-press">[ PRESS ANYWHERE TO START ]</div>
+    <div class="title-credit">— A BIRTHDAY GAME BY ASH —</div>
+  </div>
+
+  <div id="hud" style="display:none">
+    <div class="hud-item">JASHAN <span class="gold">LV 22</span></div>
+    <div id="hp-bar">
+      HP <div id="hp-bar-bg"><div id="hp-bar-fill"></div></div>
+      <span id="hp-text" class="gold">∞/∞</span>
+    </div>
+    <div class="hud-item">G <span class="gold" id="hud-gold">0</span></div>
+  </div>
+
+  <div id="scene-area">
+    <div id="scene-content">
+      <div class="bg-stars" id="bg-stars"></div>
+    </div>
+    <div id="progress-dots"></div>
+    <div class="fade-overlay" id="fade"></div>
+  </div>
+
+  <div id="dialog-box" style="display:none">
+    <div id="dialog-speaker">JASHAN</div>
+    <div id="dialog-text"></div>
+    <div id="choices-box"></div>
+    <div id="type-box">
+      <input id="type-input" type="text" placeholder="* type your answer..." autocomplete="off" autocorrect="off" autocapitalize="off"/>
+      <br><button id="type-submit" onclick="submitType()">SUBMIT</button>
+    </div>
+    <div id="dialog-arrow">▼</div>
+  </div>
+
+  <div id="mg-box">
+    <div class="mg-title" id="mg-title">* MINIGAME</div>
+    <div class="mg-arena" id="mg-arena"></div>
+    <div class="mg-status" id="mg-status">* Click to play!</div>
+    <div>
+      <button class="mg-btn" id="mg-close" onclick="closeMg()" style="display:none">[ CONTINUE ]</button>
+    </div>
+  </div>
+
+  <div id="battle-box">
+    <div id="battle-enemy">
+      <div id="battle-enemy-name">— THE PERIOD MONSTER —</div>
+      <div id="battle-enemy-hp">
+        HP <div id="battle-enemy-hp-bg"><div id="battle-enemy-hp-fill"></div></div>
+        <span id="battle-enemy-hp-text">100/100</span>
+      </div>
+      <div id="battle-enemy-sprite"></div>
+    </div>
+    <div id="battle-jashan-info">
+      <div class="j-stat">JASHAN <span class="gold">LV 22</span></div>
+      <div class="j-stat">HP <div class="j-hp-bg"><div class="j-hp-fill"></div></div> <span class="gold">∞/∞</span></div>
+    </div>
+    <div id="battle-dialog">* The Period Monster appeared.</div>
+    <div id="battle-actions"></div>
+  </div>
+
+  <div id="finale"></div>
+
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════
+// PIXEL ART SPRITES
+// ═══════════════════════════════════════════════════════════
+const SPRITES = {
+
+// ── COHO (dachshund) ──
+coho: `<svg width="120" height="80" viewBox="0 0 30 20" shape-rendering="crispEdges" class="pixel-sprite">
+<path fill="#8b4513" d="M5 8h18v5H5z"/>
+<path fill="#a0522d" d="M5 8h18v1H5z"/>
+<path fill="#6b3010" d="M5 12h18v1H5z"/>
+<path fill="#8b4513" d="M22 6h6v6h-6z"/>
+<path fill="#a0522d" d="M22 6h6v1h-6z"/>
+<path fill="#5a2008" d="M21 7h2v5h-2z"/>
+<path fill="#5a2008" d="M22 12h1v1h-1z"/>
+<path fill="#a0522d" d="M27 9h2v3h-2z"/>
+<path fill="#000" d="M28 9h1v1h-1z"/>
+<path fill="#000" d="M25 8h1v1h-1z"/>
+<path fill="#6b3010" d="M6 13h2v4H6z"/>
+<path fill="#6b3010" d="M11 13h2v4h-2z"/>
+<path fill="#6b3010" d="M16 13h2v4h-2z"/>
+<path fill="#6b3010" d="M20 13h2v4h-2z"/>
+<path fill="#000" d="M6 16h2v1H6z"/>
+<path fill="#000" d="M11 16h2v1h-2z"/>
+<path fill="#000" d="M16 16h2v1h-2z"/>
+<path fill="#000" d="M20 16h2v1h-2z"/>
+<path fill="#8b4513" d="M3 7h2v3H3z"/>
+<path fill="#8b4513" d="M2 5h2v3H2z"/>
+<path fill="#ff5050" d="M22 11h2v2h-2z"/>
+<path fill="#ffd166" d="M23 12h1v1h-1z"/>
+</svg>`,
+
+// ── DJUNGELSKUG (proper monkey - long arms, tail, monkey face) ──
+djungelskug: `<svg width="110" height="120" viewBox="0 0 22 24" shape-rendering="crispEdges" class="pixel-sprite">
+<!-- TAIL (curled behind) -->
+<path fill="#5a3a1a" d="M0 14h2v2H0z"/>
+<path fill="#5a3a1a" d="M1 13h2v1H1z"/>
+<path fill="#5a3a1a" d="M2 12h2v1H2z"/>
+<path fill="#5a3a1a" d="M3 11h1v2H3z"/>
+<path fill="#5a3a1a" d="M3 16h1v2H3z"/>
+<!-- BODY (rounded, monkey-shaped) -->
+<path fill="#7a4a20" d="M7 11h8v8H7z"/>
+<path fill="#5a3a1a" d="M7 11h8v1H7z"/>
+<path fill="#9a6a40" d="M8 12h6v1H8z"/>
+<!-- LIGHTER BELLY (signature monkey) -->
+<path fill="#d4a86a" d="M9 13h4v5H9z"/>
+<path fill="#c49855" d="M9 13h4v1H9z"/>
+<!-- HEAD (round, with prominent ears) -->
+<path fill="#7a4a20" d="M6 4h10v7H6z"/>
+<path fill="#5a3a1a" d="M6 4h10v1H6z"/>
+<!-- BIG MONKEY EARS (on the side) -->
+<path fill="#7a4a20" d="M4 6h2v3H4z"/>
+<path fill="#7a4a20" d="M16 6h2v3h-2z"/>
+<path fill="#5a3a1a" d="M4 6h1v1H4z"/>
+<path fill="#5a3a1a" d="M17 6h1v1h-1z"/>
+<!-- INNER EARS (pink/lighter) -->
+<path fill="#d4a86a" d="M5 7h1v1H5z"/>
+<path fill="#d4a86a" d="M16 7h1v1h-1z"/>
+<!-- FACE (lighter cream color, classic monkey face) -->
+<path fill="#e8c898" d="M7 6h8v5H7z"/>
+<path fill="#d4a86a" d="M7 6h8v1H7z"/>
+<!-- BROW RIDGE (monkey thing) -->
+<path fill="#5a3a1a" d="M7 6h8v1H7z"/>
+<path fill="#5a3a1a" d="M7 7h2v1H7z"/>
+<path fill="#5a3a1a" d="M13 7h2v1h-2z"/>
+<!-- EYES -->
+<path fill="#000" d="M8 8h2v1H8z"/>
+<path fill="#000" d="M12 8h2v1h-2z"/>
+<path fill="#fff" d="M9 8h1v1H9z"/>
+<path fill="#fff" d="M13 8h1v1h-1z"/>
+<!-- SNOUT (sticking out, monkey signature) -->
+<path fill="#d4a86a" d="M9 9h4v2H9z"/>
+<path fill="#a87838" d="M9 11h4v0z"/>
+<!-- NOSTRILS -->
+<path fill="#5a3a1a" d="M10 9h1v1h-1z"/>
+<path fill="#5a3a1a" d="M11 9h1v1h-1z"/>
+<!-- MOUTH (slight smile) -->
+<path fill="#5a3a1a" d="M9 10h4v1H9z"/>
+<path fill="#000" d="M10 10h2v1h-2z"/>
+<!-- LONG ARMS (monkey arms, very long, dangling) -->
+<path fill="#7a4a20" d="M3 12h4v6H3z"/>
+<path fill="#7a4a20" d="M15 12h4v6h-4z"/>
+<path fill="#5a3a1a" d="M3 12h1v6H3z"/>
+<path fill="#5a3a1a" d="M18 12h1v6h-1z"/>
+<!-- HANDS -->
+<path fill="#d4a86a" d="M3 18h4v2H3z"/>
+<path fill="#d4a86a" d="M15 18h4v2h-4z"/>
+<path fill="#5a3a1a" d="M3 19h1v1H3z"/>
+<path fill="#5a3a1a" d="M5 19h1v1H5z"/>
+<path fill="#5a3a1a" d="M16 19h1v1h-1z"/>
+<path fill="#5a3a1a" d="M18 19h1v1h-1z"/>
+<!-- LEGS -->
+<path fill="#7a4a20" d="M8 19h2v3H8z"/>
+<path fill="#7a4a20" d="M12 19h2v3h-2z"/>
+<!-- FEET (monkey feet - wider) -->
+<path fill="#d4a86a" d="M7 22h3v2H7z"/>
+<path fill="#d4a86a" d="M12 22h3v2h-3z"/>
+<path fill="#5a3a1a" d="M7 23h3v1H7z"/>
+<path fill="#5a3a1a" d="M12 23h3v1h-3z"/>
+</svg>`,
+
+// ── COW ──
+cow: `<svg width="100" height="80" viewBox="0 0 25 20" shape-rendering="crispEdges" class="pixel-sprite">
+<path fill="#fff" d="M4 8h16v7H4z"/>
+<path fill="#000" d="M6 9h3v2H6z"/>
+<path fill="#000" d="M14 11h3v2h-3z"/>
+<path fill="#000" d="M10 13h2v2h-2z"/>
+<path fill="#fff" d="M18 6h6v7h-6z"/>
+<path fill="#000" d="M19 7h2v2h-2z"/>
+<path fill="#fff8c0" d="M19 5h1v2h-1z"/>
+<path fill="#fff8c0" d="M22 5h1v2h-1z"/>
+<path fill="#000" d="M21 8h1v1h-1z"/>
+<path fill="#ffb3c6" d="M22 10h2v3h-2z"/>
+<path fill="#000" d="M22 11h1v1h-1z"/>
+<path fill="#000" d="M23 11h1v1h-1z"/>
+<path fill="#000" d="M17 5h2v2h-2z"/>
+<path fill="#fff" d="M5 15h2v4H5z"/>
+<path fill="#fff" d="M9 15h2v4H9z"/>
+<path fill="#fff" d="M14 15h2v4h-2z"/>
+<path fill="#fff" d="M18 15h2v4h-2z"/>
+<path fill="#000" d="M5 18h2v1H5z"/>
+<path fill="#000" d="M9 18h2v1H9z"/>
+<path fill="#000" d="M14 18h2v1h-2z"/>
+<path fill="#000" d="M18 18h2v1h-2z"/>
+<path fill="#ffb3c6" d="M11 15h3v2h-3z"/>
+<path fill="#fff" d="M3 9h1v3H3z"/>
+<path fill="#000" d="M3 11h1v1H3z"/>
+</svg>`,
+
+// ── MONSTERA ──
+monstera: `<svg width="100" height="120" viewBox="0 0 20 24" shape-rendering="crispEdges" class="pixel-sprite">
+<path fill="#a0522d" d="M5 18h10v5H5z"/>
+<path fill="#8b4513" d="M5 22h10v1H5z"/>
+<path fill="#c0844a" d="M4 17h12v2H4z"/>
+<path fill="#3a2010" d="M5 17h10v1H5z"/>
+<path fill="#4a7a2a" d="M9 14h2v4h-2z"/>
+<path fill="#2d6b1a" d="M2 8h6v6H2z"/>
+<path fill="#3a8a2a" d="M3 8h5v1H3z"/>
+<path fill="#000" d="M4 10h1v1H4z"/>
+<path fill="#000" d="M4 12h2v1H4z"/>
+<path fill="#000" d="M2 11h1v2H2z"/>
+<path fill="#2d6b1a" d="M12 8h6v6h-6z"/>
+<path fill="#3a8a2a" d="M12 8h5v1h-5z"/>
+<path fill="#000" d="M15 10h1v1h-1z"/>
+<path fill="#000" d="M14 12h2v1h-2z"/>
+<path fill="#000" d="M17 11h1v2h-1z"/>
+<path fill="#2d6b1a" d="M7 2h6v6H7z"/>
+<path fill="#3a8a2a" d="M7 2h5v1H7z"/>
+<path fill="#000" d="M9 4h1v1H9z"/>
+<path fill="#000" d="M8 6h2v1H8z"/>
+<path fill="#000" d="M11 4h1v2h-1z"/>
+<path fill="#4a7a2a" d="M5 12h2v3H5z"/>
+<path fill="#4a7a2a" d="M13 12h2v3h-2z"/>
+<path fill="#4a7a2a" d="M9 7h2v2H9z"/>
+</svg>`,
+
+// ── PINK PRINCESS ──
+pinkprincess: `<svg width="100" height="120" viewBox="0 0 20 24" shape-rendering="crispEdges" class="pixel-sprite">
+<path fill="#d8a0c0" d="M5 18h10v5H5z"/>
+<path fill="#a87090" d="M5 22h10v1H5z"/>
+<path fill="#e8c0d8" d="M4 17h12v2H4z"/>
+<path fill="#3a2010" d="M5 17h10v1H5z"/>
+<path fill="#4a7a2a" d="M9 14h2v4h-2z"/>
+<path fill="#1a4a1a" d="M2 9h6v5H2z"/>
+<path fill="#3a6a3a" d="M2 9h6v1H2z"/>
+<path fill="#ff6ba6" d="M3 10h2v2H3z"/>
+<path fill="#ffa0c0" d="M3 11h1v1H3z"/>
+<path fill="#1a4a1a" d="M12 9h6v5h-6z"/>
+<path fill="#3a6a3a" d="M12 9h6v1h-6z"/>
+<path fill="#ff6ba6" d="M14 11h3v2h-3z"/>
+<path fill="#ffa0c0" d="M15 11h1v1h-1z"/>
+<path fill="#1a4a1a" d="M7 3h6v5H7z"/>
+<path fill="#3a6a3a" d="M7 3h6v1H7z"/>
+<path fill="#ff6ba6" d="M9 4h2v3H9z"/>
+<path fill="#ffa0c0" d="M9 5h1v1H9z"/>
+<path fill="#4a7a2a" d="M5 13h2v2H5z"/>
+<path fill="#4a7a2a" d="M13 13h2v2h-2z"/>
+<path fill="#4a7a2a" d="M9 7h2v2H9z"/>
+</svg>`,
+
+// ── BUTTERFLY ──
+butterfly: `<svg width="80" height="60" viewBox="0 0 20 15" shape-rendering="crispEdges" class="pixel-sprite">
+<path fill="#000" d="M9 5h2v8H9z"/>
+<path fill="#ffd84d" d="M3 4h6v4H3z"/>
+<path fill="#ffd84d" d="M11 4h6v4h-6z"/>
+<path fill="#ffea80" d="M4 5h4v2H4z"/>
+<path fill="#ffea80" d="M12 5h4v2h-4z"/>
+<path fill="#000" d="M3 4h1v1H3z"/>
+<path fill="#000" d="M2 5h1v3H2z"/>
+<path fill="#000" d="M3 8h6v1H3z"/>
+<path fill="#000" d="M17 5h1v3h-1z"/>
+<path fill="#000" d="M11 8h6v1h-6z"/>
+<path fill="#000" d="M16 4h1v1h-1z"/>
+<path fill="#ffd84d" d="M4 8h4v3H4z"/>
+<path fill="#ffd84d" d="M12 8h4v3h-4z"/>
+<path fill="#000" d="M4 11h4v1H4z"/>
+<path fill="#000" d="M12 11h4v1h-4z"/>
+<path fill="#000" d="M3 10h1v3H3z"/>
+<path fill="#000" d="M16 10h1v3h-1z"/>
+<path fill="#3a90e0" d="M5 9h1v1H5z"/>
+<path fill="#3a90e0" d="M14 9h1v1h-1z"/>
+<path fill="#000" d="M8 2h1v3H8z"/>
+<path fill="#000" d="M11 2h1v3h-1z"/>
+<path fill="#000" d="M7 1h2v1H7z"/>
+<path fill="#000" d="M11 1h2v1h-2z"/>
+</svg>`,
+
+// ── BED ──
+bed: `<svg width="120" height="80" viewBox="0 0 30 20" shape-rendering="crispEdges" class="pixel-sprite">
+<path fill="#5a3a1a" d="M2 8h26v10H2z"/>
+<path fill="#7a4a2a" d="M2 8h26v1H2z"/>
+<path fill="#3a2010" d="M2 17h26v1H2z"/>
+<path fill="#fffafa" d="M2 9h26v3H2z"/>
+<path fill="#e0e0e0" d="M2 11h26v1H2z"/>
+<path fill="#fff8c0" d="M3 8h7v2H3z"/>
+<path fill="#ffd166" d="M3 8h7v1H3z"/>
+<path fill="#c87a8b" d="M2 12h26v5H2z"/>
+<path fill="#a86070" d="M2 12h26v1H2z"/>
+<path fill="#ffd166" d="M5 14h2v1H5z"/>
+<path fill="#ffd166" d="M11 14h2v1h-2z"/>
+<path fill="#ffd166" d="M17 14h2v1h-2z"/>
+<path fill="#ffd166" d="M23 14h2v1h-2z"/>
+<path fill="#3a2010" d="M2 5h2v15H2z"/>
+<path fill="#3a2010" d="M26 5h2v15h-2z"/>
+<path fill="#5a3a1a" d="M2 5h2v1H2z"/>
+<path fill="#5a3a1a" d="M26 5h2v1h-2z"/>
+</svg>`,
+
+// ── CHAI ──
+chai: `<svg width="100" height="100" viewBox="0 0 20 20" shape-rendering="crispEdges" class="pixel-sprite">
+<path fill="#fff" d="M2 16h16v2H2z"/>
+<path fill="#d0d0d0" d="M2 17h16v1H2z"/>
+<path fill="#fff" d="M5 8h10v8H5z"/>
+<path fill="#e8e8e8" d="M5 8h10v1H5z"/>
+<path fill="#d0d0d0" d="M5 14h10v1H5z"/>
+<path fill="#a0522d" d="M6 9h8v3H6z"/>
+<path fill="#c47a2b" d="M6 9h8v1H6z"/>
+<path fill="#fff" d="M15 10h2v4h-2z"/>
+<path fill="#000" d="M16 11h1v2h-1z"/>
+<path fill="#fff" d="M7 3h1v2H7z"/>
+<path fill="#fff" d="M8 1h1v2H8z"/>
+<path fill="#fff" d="M10 2h1v2h-1z"/>
+<path fill="#fff" d="M11 4h1v2h-1z"/>
+<path fill="#fff" d="M12 1h1v2h-1z"/>
+</svg>`,
+
+// ── PHONE ──
+phone: `<svg width="80" height="120" viewBox="0 0 16 24" shape-rendering="crispEdges" class="pixel-sprite">
+<path fill="#1a1a1a" d="M2 1h12v22H2z"/>
+<path fill="#2a2a2a" d="M2 1h12v1H2z"/>
+<path fill="#3a90e0" d="M3 4h10v16H3z"/>
+<path fill="#fff" d="M4 7h8v3H4z"/>
+<path fill="#fff" d="M4 12h6v3H4z"/>
+<path fill="#ffd166" d="M5 8h2v1H5z"/>
+<path fill="#ff5050" d="M8 8h1v1H8z"/>
+<path fill="#ff5050" d="M5 13h1v1H5z"/>
+<path fill="#5a5a5a" d="M6 2h4v1H6z"/>
+<path fill="#5a5a5a" d="M7 21h2v1H7z"/>
+</svg>`,
+
+// ── CANE'S ──
+canes: `<svg width="100" height="80" viewBox="0 0 20 16" shape-rendering="crispEdges" class="pixel-sprite">
+<path fill="#ff5050" d="M2 8h16v7H2z"/>
+<path fill="#cc3030" d="M2 14h16v1H2z"/>
+<path fill="#ffd166" d="M3 9h14v1H3z"/>
+<path fill="#d4a040" d="M5 4h2v6H5z"/>
+<path fill="#d4a040" d="M8 3h2v7H8z"/>
+<path fill="#d4a040" d="M11 4h2v6h-2z"/>
+<path fill="#d4a040" d="M14 5h2v5h-2z"/>
+<path fill="#a87020" d="M5 5h1v1H5z"/>
+<path fill="#a87020" d="M9 5h1v1H9z"/>
+<path fill="#a87020" d="M11 7h1v1h-1z"/>
+<path fill="#a87020" d="M15 7h1v1h-1z"/>
+<path fill="#f0c060" d="M6 4h1v1H6z"/>
+<path fill="#f0c060" d="M9 3h1v1H9z"/>
+<path fill="#fff" d="M16 6h2v4h-2z"/>
+<path fill="#ffb3a0" d="M16 7h2v2h-2z"/>
+</svg>`,
+
+// ── ICE CREAM ──
+icecream: `<svg width="80" height="120" viewBox="0 0 16 24" shape-rendering="crispEdges" class="pixel-sprite">
+<path fill="#fff" d="M2 6h12v16H2z"/>
+<path fill="#e0e0e0" d="M2 21h12v1H2z"/>
+<path fill="#a0522d" d="M3 9h10v8H3z"/>
+<path fill="#5a3010" d="M3 9h10v1H3z"/>
+<path fill="#5a3010" d="M3 16h10v1H3z"/>
+<path fill="#ffd166" d="M4 11h8v1H4z"/>
+<path fill="#fff" d="M4 13h8v2H4z"/>
+<path fill="#000" d="M5 14h1v1H5z"/>
+<path fill="#000" d="M8 14h1v1H8z"/>
+<path fill="#000" d="M10 14h1v1h-1z"/>
+<path fill="#fff" d="M1 4h14v3H1z"/>
+<path fill="#d0d0d0" d="M1 6h14v1H1z"/>
+<path fill="#fff8c0" d="M3 5h10v1H3z"/>
+</svg>`,
+
+// ── SOUP ──
+soup: `<svg width="100" height="70" viewBox="0 0 20 14" shape-rendering="crispEdges" class="pixel-sprite">
+<path fill="#cc3030" d="M2 8h16v5H2z"/>
+<path fill="#fff" d="M3 7h14v2H3z"/>
+<path fill="#a02020" d="M2 12h16v1H2z"/>
+<path fill="#ffd166" d="M4 10h1v1H4z"/>
+<path fill="#ffd166" d="M8 10h1v1H8z"/>
+<path fill="#ffd166" d="M12 10h1v1h-1z"/>
+<path fill="#ffd166" d="M15 10h1v1h-1z"/>
+<path fill="#a04020" d="M4 6h12v2H4z"/>
+<path fill="#c06030" d="M4 6h12v1H4z"/>
+<path fill="#3a8a3a" d="M5 5h1v1H5z"/>
+<path fill="#fff" d="M8 5h1v1H8z"/>
+<path fill="#3a8a3a" d="M11 5h1v1h-1z"/>
+<path fill="#fff" d="M13 5h1v1h-1z"/>
+<path fill="#fff" d="M6 2h1v2H6z"/>
+<path fill="#fff" d="M9 1h1v2H9z"/>
+<path fill="#fff" d="M12 2h1v2h-1z"/>
+<path fill="#fff" d="M14 1h1v2h-1z"/>
+</svg>`,
+
+// ── LETTERS ──
+letters: `<svg width="100" height="90" viewBox="0 0 20 18" shape-rendering="crispEdges" class="pixel-sprite">
+<path fill="#e0c0a0" d="M3 5h12v9H3z"/>
+<path fill="#a87060" d="M3 5h12v1H3z"/>
+<path fill="#ffb3c6" d="M4 6h13v9H4z"/>
+<path fill="#cc6080" d="M4 6h13v1H4z"/>
+<path fill="#fff" d="M5 7h13v9H5z"/>
+<path fill="#d0d0d0" d="M5 7h13v1H5z"/>
+<path fill="#ffd166" d="M5 7h13v4H5z"/>
+<path fill="#ff5050" d="M11 8h2v2h-2z"/>
+<path fill="#000" d="M6 12h11v1H6z"/>
+<path fill="#000" d="M6 14h8v1H6z"/>
+<path fill="#ff5050" d="M11 8h1v1h-1z"/>
+<path fill="#ff5050" d="M12 8h1v1h-1z"/>
+<path fill="#ff5050" d="M11 9h2v1h-2z"/>
+</svg>`,
+
+// ── CAKE ──
+cake: `<svg width="160" height="160" viewBox="0 0 32 32" shape-rendering="crispEdges" class="pixel-sprite">
+<path fill="#fff" d="M2 26h28v3H2z"/>
+<path fill="#d0d0d0" d="M2 28h28v1H2z"/>
+<path fill="#ffb3c6" d="M4 18h24v8H4z"/>
+<path fill="#cc6080" d="M4 25h24v1H4z"/>
+<path fill="#fff" d="M4 18h24v2H4z"/>
+<path fill="#ffd0e0" d="M5 20h2v1H5z"/>
+<path fill="#ffd0e0" d="M9 20h2v1H9z"/>
+<path fill="#ffd0e0" d="M13 20h2v1h-2z"/>
+<path fill="#ffd0e0" d="M17 20h2v1h-2z"/>
+<path fill="#ffd0e0" d="M21 20h2v1h-2z"/>
+<path fill="#ffd0e0" d="M25 20h2v1h-2z"/>
+<path fill="#ffd166" d="M9 11h14v7H9z"/>
+<path fill="#cc9020" d="M9 17h14v1H9z"/>
+<path fill="#fff" d="M9 11h14v2H9z"/>
+<path fill="#ff5050" d="M11 22h1v1h-1z"/>
+<path fill="#ff5050" d="M15 22h1v1h-1z"/>
+<path fill="#ff5050" d="M19 22h1v1h-1z"/>
+<path fill="#ff5050" d="M23 22h1v1h-1z"/>
+<path fill="#a05030" d="M11 14h10v1H11z"/>
+<path fill="#fff" d="M11 7h2v4h-2z"/>
+<path fill="#fff" d="M15 7h2v4h-2z"/>
+<path fill="#fff" d="M19 7h2v4h-2z"/>
+<path fill="#ff5050" d="M11 8h2v1h-2z"/>
+<path fill="#ff5050" d="M15 8h2v1h-2z"/>
+<path fill="#ff5050" d="M19 8h2v1h-2z"/>
+<path fill="#ffd166" d="M11 4h2v3h-2z"/>
+<path fill="#ffd166" d="M15 4h2v3h-2z"/>
+<path fill="#ffd166" d="M19 4h2v3h-2z"/>
+<path fill="#ff5050" d="M11 5h2v2h-2z"/>
+<path fill="#ff5050" d="M15 5h2v2h-2z"/>
+<path fill="#ff5050" d="M19 5h2v2h-2z"/>
+</svg>`,
+
+// ── HEART (small) ──
+heart_small: `<svg width="16" height="14" viewBox="0 0 8 7" shape-rendering="crispEdges">
+<path fill="#ff3838" d="M1 1h2v1H1zM4 1h2v1H4zM0 2h7v1H0zM0 3h7v1H0zM1 4h5v1H1zM2 5h3v1H2zM3 6h1v1H3z"/>
+</svg>`,
+
+// ── JASHAN (pixel art - long brown hair, smile, casual top) ──
+jashan: `<svg width="80" height="130" viewBox="0 0 16 26" shape-rendering="crispEdges" class="pixel-sprite">
+<!-- LONG HAIR BACK (flowing) -->
+<path fill="#3a1f10" d="M3 4h10v8H3z"/>
+<path fill="#2a1508" d="M2 6h2v9H2z"/>
+<path fill="#2a1508" d="M12 6h2v9h-2z"/>
+<!-- HAIR LONGER -->
+<path fill="#3a1f10" d="M3 12h2v3H3z"/>
+<path fill="#3a1f10" d="M11 12h2v3h-2z"/>
+<!-- HEAD -->
+<path fill="#c98a5a" d="M5 4h6v8H5z"/>
+<path fill="#a87040" d="M5 11h6v1H5z"/>
+<!-- HAIR TOP/BANGS -->
+<path fill="#2a1508" d="M5 4h6v2H5z"/>
+<path fill="#3a1f10" d="M5 4h6v1H5z"/>
+<path fill="#3a1f10" d="M4 5h1v3H4z"/>
+<path fill="#3a1f10" d="M11 5h1v3h-1z"/>
+<!-- SIDE HAIR -->
+<path fill="#3a1f10" d="M4 6h1v6H4z"/>
+<path fill="#3a1f10" d="M11 6h1v6h-1z"/>
+<!-- EYES (smiling/closed - based on photo) -->
+<path fill="#000" d="M6 7h1v1H6z"/>
+<path fill="#000" d="M9 7h1v1H9z"/>
+<!-- EYEBROWS (her bold brows) -->
+<path fill="#1a0a05" d="M6 6h1v1H6z"/>
+<path fill="#1a0a05" d="M9 6h1v1H9z"/>
+<!-- NOSE + nose ring -->
+<path fill="#a87040" d="M7 8h2v1H7z"/>
+<path fill="#ffd166" d="M9 8h1v1H9z"/>
+<!-- BIG SMILE (her signature smile!) -->
+<path fill="#5a3010" d="M6 9h4v1H6z"/>
+<path fill="#fff" d="M6 9h4v1H6z"/>
+<path fill="#000" d="M6 9h1v1H6z"/>
+<path fill="#000" d="M9 9h1v1H9z"/>
+<path fill="#5a3010" d="M5 10h6v1H5z"/>
+<!-- CHEEKS (rosy) -->
+<path fill="#e8a070" d="M5 9h1v1H5z"/>
+<path fill="#e8a070" d="M10 9h1v1h-1z"/>
+<!-- NECK -->
+<path fill="#a87040" d="M6 12h4v2H6z"/>
+<!-- WHITE TOP (like in photo) -->
+<path fill="#f8f8f8" d="M3 14h10v6H3z"/>
+<path fill="#e8e8e8" d="M3 14h10v1H3z"/>
+<!-- TANK TOP STRAPS -->
+<path fill="#f8f8f8" d="M5 13h1v2H5z"/>
+<path fill="#f8f8f8" d="M10 13h1v2h-1z"/>
+<!-- GOLD NECKLACE -->
+<path fill="#ffd166" d="M6 13h4v1H6z"/>
+<path fill="#cc9020" d="M7 14h2v1H7z"/>
+<!-- ARMS -->
+<path fill="#c98a5a" d="M2 14h1v6H2z"/>
+<path fill="#c98a5a" d="M13 14h1v6h-1z"/>
+<!-- LEGS / SKIRT -->
+<path fill="#3a3030" d="M4 20h8v5H4z"/>
+<path fill="#2a2020" d="M4 24h8v1H4z"/>
+<!-- Legs visible -->
+<path fill="#c98a5a" d="M5 25h2v1H5z"/>
+<path fill="#c98a5a" d="M9 25h2v1H9z"/>
+</svg>`,
+
+// ── ASH (curly hair, brown skin, white tank, sunglasses on head) ──
+ash: `<svg width="80" height="130" viewBox="0 0 16 26" shape-rendering="crispEdges" class="pixel-sprite">
+<!-- CURLY HAIR (extra volume on top) -->
+<path fill="#1a0a05" d="M4 2h8v5H4z"/>
+<path fill="#2a1508" d="M3 3h1v4H3z"/>
+<path fill="#2a1508" d="M12 3h1v4h-1z"/>
+<!-- CURLS (bumps) -->
+<path fill="#1a0a05" d="M3 2h1v1H3z"/>
+<path fill="#1a0a05" d="M5 1h1v1H5z"/>
+<path fill="#1a0a05" d="M7 1h1v1H7z"/>
+<path fill="#1a0a05" d="M9 1h1v1H9z"/>
+<path fill="#1a0a05" d="M11 1h1v1h-1z"/>
+<path fill="#1a0a05" d="M12 2h1v1h-1z"/>
+<!-- SUNGLASSES ON HEAD -->
+<path fill="#000" d="M4 4h8v1H4z"/>
+<path fill="#000" d="M4 5h2v1H4z"/>
+<path fill="#000" d="M10 5h2v1h-2z"/>
+<path fill="#3a3a3a" d="M5 5h1v1H5z"/>
+<path fill="#3a3a3a" d="M11 5h1v1h-1z"/>
+<!-- HEAD (warm brown skin tone) -->
+<path fill="#a8704a" d="M5 6h6v6H5z"/>
+<path fill="#8b5a2b" d="M5 11h6v1H5z"/>
+<!-- EYEBROWS (bold) -->
+<path fill="#1a0a05" d="M6 7h1v1H6z"/>
+<path fill="#1a0a05" d="M9 7h1v1H9z"/>
+<!-- EYES -->
+<path fill="#000" d="M6 8h1v1H6z"/>
+<path fill="#000" d="M9 8h1v1H9z"/>
+<!-- NOSE -->
+<path fill="#8b5a2b" d="M7 9h2v1H7z"/>
+<!-- HAPPY GRIN -->
+<path fill="#fff" d="M6 10h4v1H6z"/>
+<path fill="#5a3010" d="M5 10h1v1H5z"/>
+<path fill="#5a3010" d="M10 10h1v1h-1z"/>
+<!-- STUBBLE (like in photo) -->
+<path fill="#3a2010" d="M5 11h1v1H5z"/>
+<path fill="#3a2010" d="M10 11h1v1h-1z"/>
+<path fill="#3a2010" d="M7 11h2v1H7z"/>
+<!-- NECK -->
+<path fill="#8b5a2b" d="M6 12h4v2H6z"/>
+<!-- WHITE T-SHIRT/TANK (like in photo) -->
+<path fill="#f8f8f8" d="M3 14h10v8H3z"/>
+<path fill="#e8e8e8" d="M3 14h10v1H3z"/>
+<!-- GOLD CHAIN -->
+<path fill="#ffd166" d="M6 14h4v1H6z"/>
+<!-- CROSSBODY STRAP (like in photo) -->
+<path fill="#1a1a1a" d="M3 14h1v8H3z"/>
+<path fill="#1a1a1a" d="M4 15h1v6H4z"/>
+<!-- ARMS -->
+<path fill="#a8704a" d="M2 14h1v6H2z"/>
+<path fill="#a8704a" d="M13 14h1v6h-1z"/>
+<!-- PANTS (dark) -->
+<path fill="#2a2a3a" d="M4 22h8v3H4z"/>
+<path fill="#a8704a" d="M5 25h2v1H5z"/>
+<path fill="#a8704a" d="M9 25h2v1H9z"/>
+</svg>`,
+
+// ── PERIOD MONSTER (intimidating boss sprite) ──
+period_monster: `<svg width="180" height="180" viewBox="0 0 30 30" shape-rendering="crispEdges" class="pixel-sprite">
+<!-- BLOB BODY (dark red, ominous) -->
+<path fill="#8b0000" d="M6 8h18v16H6z"/>
+<path fill="#a52a2a" d="M5 9h2v14H5z"/>
+<path fill="#a52a2a" d="M23 9h2v14h-2z"/>
+<path fill="#660000" d="M6 22h18v2H6z"/>
+<!-- DRIPPING / TENDRILS -->
+<path fill="#660000" d="M7 24h2v3H7z"/>
+<path fill="#660000" d="M11 24h2v4h-2z"/>
+<path fill="#660000" d="M16 24h2v3h-2z"/>
+<path fill="#660000" d="M20 24h2v4h-2z"/>
+<path fill="#440000" d="M11 27h2v1h-2z"/>
+<path fill="#440000" d="M20 27h2v1h-2z"/>
+<!-- ANGRY EYES -->
+<path fill="#fff" d="M9 12h4v3H9z"/>
+<path fill="#fff" d="M17 12h4v3h-4z"/>
+<path fill="#000" d="M10 13h2v2h-2z"/>
+<path fill="#000" d="M18 13h2v2h-2z"/>
+<path fill="#ff0000" d="M11 13h1v1h-1z"/>
+<path fill="#ff0000" d="M19 13h1v1h-1z"/>
+<!-- ANGRY EYEBROWS -->
+<path fill="#000" d="M9 11h4v1H9z"/>
+<path fill="#000" d="M17 11h4v1h-4z"/>
+<path fill="#000" d="M9 10h2v1H9z"/>
+<path fill="#000" d="M19 10h2v1h-2z"/>
+<!-- MENACING MOUTH (jagged teeth) -->
+<path fill="#000" d="M10 17h10v4H10z"/>
+<path fill="#fff" d="M11 18h1v2h-1z"/>
+<path fill="#fff" d="M13 18h1v2h-1z"/>
+<path fill="#fff" d="M15 18h1v2h-1z"/>
+<path fill="#fff" d="M17 18h1v2h-1z"/>
+<path fill="#fff" d="M19 18h1v2h-1z"/>
+<!-- HORNS / SPIKES -->
+<path fill="#440000" d="M8 6h2v3H8z"/>
+<path fill="#440000" d="M14 5h2v4h-2z"/>
+<path fill="#440000" d="M20 6h2v3h-2z"/>
+<path fill="#660000" d="M8 6h1v3H8z"/>
+<path fill="#660000" d="M14 5h1v4h-1z"/>
+<path fill="#660000" d="M20 6h1v3h-1z"/>
+<!-- SCAR / cramps texture -->
+<path fill="#660000" d="M8 21h2v1H8z"/>
+<path fill="#660000" d="M14 22h2v1h-2z"/>
+<path fill="#660000" d="M20 21h2v1h-2z"/>
+<!-- AURA (dark red glow on edges) -->
+<path fill="#aa3030" d="M5 8h1v15H5z"/>
+<path fill="#aa3030" d="M24 8h1v15h-1z"/>
+</svg>`,
+
+// ── PARTY GUEST 1 (friend) ──
+guest1: `<svg width="60" height="100" viewBox="0 0 12 20" shape-rendering="crispEdges" class="pixel-sprite">
+<path fill="#3a1a0a" d="M3 1h6v4H3z"/>
+<path fill="#c98a5a" d="M4 4h4v4H4z"/>
+<path fill="#000" d="M5 6h1v1H5z"/>
+<path fill="#000" d="M7 6h1v1H7z"/>
+<path fill="#5a3010" d="M5 7h2v1H5z"/>
+<path fill="#ff80a0" d="M2 9h8v6H2z"/>
+<path fill="#cc6080" d="M2 9h8v1H2z"/>
+<path fill="#3a3030" d="M3 15h6v4H3z"/>
+</svg>`,
+
+// ── PARTY GUEST 2 ──
+guest2: `<svg width="60" height="100" viewBox="0 0 12 20" shape-rendering="crispEdges" class="pixel-sprite">
+<path fill="#1a0a05" d="M3 1h6v3H3z"/>
+<path fill="#a8704a" d="M4 3h4v5H4z"/>
+<path fill="#000" d="M5 5h1v1H5z"/>
+<path fill="#000" d="M7 5h1v1H7z"/>
+<path fill="#fff" d="M5 7h2v1H5z"/>
+<path fill="#80c0ff" d="M2 9h8v6H2z"/>
+<path fill="#5080c0" d="M2 9h8v1H2z"/>
+<path fill="#3a3030" d="M3 15h6v4H3z"/>
+</svg>`,
+
+// ── PARTY GUEST 3 ──
+guest3: `<svg width="60" height="100" viewBox="0 0 12 20" shape-rendering="crispEdges" class="pixel-sprite">
+<path fill="#5a3a1a" d="M3 1h6v4H3z"/>
+<path fill="#e8b88a" d="M4 4h4v4H4z"/>
+<path fill="#000" d="M5 6h1v1H5z"/>
+<path fill="#000" d="M7 6h1v1H7z"/>
+<path fill="#5a3010" d="M5 7h2v1H5z"/>
+<path fill="#a060c0" d="M2 9h8v6H2z"/>
+<path fill="#7040a0" d="M2 9h8v1H2z"/>
+<path fill="#3a3030" d="M3 15h6v4H3z"/>
+</svg>`,
+
+// ── BALLOONS ──
+balloons: `<svg width="80" height="120" viewBox="0 0 16 24" shape-rendering="crispEdges" class="pixel-sprite">
+<path fill="#ff5050" d="M3 2h4v5H3z"/>
+<path fill="#cc3030" d="M3 6h4v1H3z"/>
+<path fill="#ff8080" d="M4 3h1v1H4z"/>
+<path fill="#ff5050" d="M5 7h1v3H5z"/>
+<path fill="#ffd166" d="M9 1h4v5H9z"/>
+<path fill="#cc9020" d="M9 5h4v1H9z"/>
+<path fill="#ffe080" d="M10 2h1v1h-1z"/>
+<path fill="#ffd166" d="M11 6h1v3h-1z"/>
+<path fill="#80c0ff" d="M6 8h4v5H6z"/>
+<path fill="#5080c0" d="M6 12h4v1H6z"/>
+<path fill="#a0d0ff" d="M7 9h1v1H7z"/>
+<path fill="#80c0ff" d="M8 13h1v3H8z"/>
+<path fill="#5a3a1a" d="M5 10h1v14H5z"/>
+<path fill="#5a3a1a" d="M11 9h1v15h-1z"/>
+<path fill="#5a3a1a" d="M8 16h1v8H8z"/>
+</svg>`,
+
+// ── PRESENT ──
+present: `<svg width="80" height="80" viewBox="0 0 16 16" shape-rendering="crispEdges" class="pixel-sprite">
+<path fill="#ff5050" d="M2 6h12v9H2z"/>
+<path fill="#cc3030" d="M2 14h12v1H2z"/>
+<path fill="#ffd166" d="M7 6h2v9H7z"/>
+<path fill="#fff" d="M7 6h2v1H7z"/>
+<path fill="#ffd166" d="M2 8h12v1H2z"/>
+<path fill="#ffd166" d="M5 3h2v3H5z"/>
+<path fill="#ffd166" d="M9 3h2v3H9z"/>
+<path fill="#ffd166" d="M4 4h3v1H4z"/>
+<path fill="#ffd166" d="M9 4h3v1H9z"/>
+</svg>`,
+
+// ── HOT WATER BOTTLE (Jashan's weapon) ──
+heatpad: `<svg width="80" height="80" viewBox="0 0 16 16" shape-rendering="crispEdges" class="pixel-sprite">
+<path fill="#ff4080" d="M3 4h10v10H3z"/>
+<path fill="#cc2060" d="M3 13h10v1H3z"/>
+<path fill="#ff80a0" d="M3 4h10v1H3z"/>
+<path fill="#cc2060" d="M6 2h4v3H6z"/>
+<path fill="#ff80a0" d="M7 2h2v1H7z"/>
+<path fill="#fff" d="M5 7h6v1H5z"/>
+<path fill="#fff" d="M5 9h6v1H5z"/>
+<path fill="#fff" d="M5 11h6v1H5z"/>
+</svg>`,
+
+// ── MIDOL (pill) ──
+pill: `<svg width="60" height="60" viewBox="0 0 12 12" shape-rendering="crispEdges" class="pixel-sprite">
+<path fill="#fff" d="M2 4h8v4H2z"/>
+<path fill="#80c0ff" d="M2 4h4v4H2z"/>
+<path fill="#5080c0" d="M2 4h4v1H2z"/>
+<path fill="#d0d0d0" d="M6 4h4v1H6z"/>
+</svg>`,
+
+// ── CHOCOLATE ──
+chocolate: `<svg width="60" height="60" viewBox="0 0 12 12" shape-rendering="crispEdges" class="pixel-sprite">
+<path fill="#5a3010" d="M2 3h8v6H2z"/>
+<path fill="#3a1f08" d="M2 8h8v1H2z"/>
+<path fill="#7a4020" d="M2 3h8v1H2z"/>
+<path fill="#3a1f08" d="M4 3h1v6H4z"/>
+<path fill="#3a1f08" d="M7 3h1v6H7z"/>
+<path fill="#3a1f08" d="M2 5h8v1H2z"/>
+</svg>`,
+};
+
+// ═══════════════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════════════
+const S = {
+  scene: 0,
+  dialogQueue: [],
+  typing: false,
+  typingTimer: null,
+  fullText: '',
+  awaitingTap: false,
+  choices: null,
+  typeData: null,
+  gold: 0,
+  hp: 99,
+  hpMax: 99,
+  flags: {
+    chaiBrewed: false,
+    cowsPet: false,
+    butterfliesCaught: false,
+    monsterDefeated: false,
+    rhythmDanced: false,
+    petCohoChoice: null,
+  },
+};
+
+// ═══════════════════════════════════════════════════════════
+// SCENES
+// ═══════════════════════════════════════════════════════════
+const SCENES = [
+
+  // 0 - OPENING
+  {bg:'black', sprites:[],
+    dialog:[
+      {speaker:'???', text:"* It's a quiet morning."},
+      {speaker:'???', text:"* The light comes in soft and warm."},
+      {speaker:'???', text:"* You wake up."},
+      {speaker:'???', text:"* Today is different."},
+      {speaker:'???', text:"* Today is your birthday."},
+    ],
+  },
+
+  // 1 - WAKE UP
+  {bg:'room', sprites:[
+      {sprite:'jashan', x:'35%', y:'50%', name:'JASHAN', bounce:true},
+      {sprite:'bed', x:'72%', y:'68%', name:'YOUR BED'},
+    ],
+    dialog:[
+      {speaker:'JASHAN', text:"* You sit up in bed."},
+      {speaker:'JASHAN', text:"* You are 22 today."},
+      {speaker:'JASHAN', text:"* You are graduating in a month."},
+      {speaker:'JASHAN', text:"* That's wild."},
+      {choices:[
+        {text:'* Get up.',          reply:"* You stretch and get out of bed.\n* Time to start the day.", score:5},
+        {text:'* Five more minutes.', reply:"* Just five more minutes. You earned it.\n* It's your birthday.", score:5},
+        {text:'* Check phone.',     reply:"* 47 birthday texts.\n* One of them is from Ash.\n* It's 8 paragraphs long. Of course.", score:10},
+      ]}
+    ]
+  },
+
+  // 2 - COHO BURSTS IN
+  {bg:'room', sprites:[
+      {sprite:'jashan', x:'70%', y:'55%', name:'JASHAN'},
+      {sprite:'coho', x:'30%', y:'62%', name:'COHO', bounce:true},
+    ],
+    dialog:[
+      {speaker:'???', text:"* Something is approaching at high speed."},
+      {speaker:'COHO', text:"BORK!! BORK BORK BORK!!"},
+      {speaker:'COHO', text:"* Coho has located you."},
+      {speaker:'COHO', text:"* He has been awake since 3am."},
+      {speaker:'COHO', text:"* He is vibrating."},
+      {speaker:'COHO', text:"I HAVE BEEN WAITING. FOR HOURS.\nFOR YOU. IT IS YOUR BIRTHDAY."},
+      {speaker:'COHO', text:"I dug you a hole in the garden.\nIt is your gift. You are welcome."},
+      {choices:[
+        {text:'* Pet Coho.',                reply:"* You pet Coho. He explodes with joy.\n* Coho gained +50 happiness.\n* Coho will remember this.", score:15, flag:'petCohoChoice', value:'pet'},
+        {text:'* Tell him about the hole.', reply:'COHO: "yes. it is a hole. for you.\nhappy birthday."\n* He is so proud.', score:10, flag:'petCohoChoice', value:'hole'},
+        {text:'* Ignore the dog.',          reply:"* You cannot ignore Coho.\n* Coho will not allow it.\n* He licks your face.", score:5, flag:'petCohoChoice', value:'ignore'},
+      ]}
+    ]
+  },
+
+  // 3 - DJUNGELSKUG IN KITCHEN
+  {bg:'kitchen', sprites:[
+      {sprite:'djungelskug', x:'30%', y:'55%', name:'DJUNGELSKUG'},
+      {sprite:'chai', x:'72%', y:'58%', name:'CHAI'},
+    ],
+    dialog:[
+      {speaker:'JASHAN', text:"* You walk into the kitchen."},
+      {speaker:'DJUNGELSKUG', text:"* Djungelskug is sitting on the counter."},
+      {speaker:'DJUNGELSKUG', text:"* As always."},
+      {speaker:'DJUNGELSKUG', text:"oh. you're awake."},
+      {speaker:'DJUNGELSKUG', text:"i was about to drink your chai."},
+      {speaker:'DJUNGELSKUG', text:"i wasn't.\nbut i was thinking about it."},
+      {speaker:'DJUNGELSKUG', text:"happy birthday btw."},
+      {speaker:'DJUNGELSKUG', text:"the party theme is me.\nyou're welcome."},
+      {choices:[
+        {text:'* "the party theme is YOU??"',  reply:'DJUNGELSKUG: "yes. obviously."\n* He gestures at himself dramatically.\n* He is wearing a tiny party hat. When did that get there?', score:10},
+        {text:'* "give me my chai."',          reply:'DJUNGELSKUG: "fine. take it."\n* He slides the cup over with one long arm.\n* "but i WAS gonna drink it. just so we\'re clear."', score:10},
+        {text:'* Try to pet him.',             reply:'* He allows it.\n* For exactly one second.\n* Then he bites your finger gently.\n* "respect the monkey."', score:15},
+      ]},
+      {speaker:'???', text:"* Time to make chai. The day demands it."},
+      {action:'minigame', mg:'chai'},
+    ]
+  },
+
+  // 4 - AFTER CHAI
+  {bg:'kitchen', sprites:[
+      {sprite:'jashan', x:'35%', y:'55%', name:'JASHAN', bounce:true},
+      {sprite:'chai', x:'70%', y:'55%', name:'PERFECT CHAI', bounce:true},
+    ],
+    dialog:[
+      {speaker:'JASHAN', text:"* The chai is perfect."},
+      {speaker:'JASHAN', text:"* As it should be."},
+      {speaker:'JASHAN', text:"* You take a sip."},
+      {speaker:'JASHAN', text:"* HP fully restored."},
+      {action:'restoreHP'},
+      {speaker:'JASHAN', text:"* Time to check on the plants."},
+    ]
+  },
+
+  // 5 - PLANTS
+  {bg:'plants', sprites:[
+      {sprite:'monstera', x:'30%', y:'55%', name:'MONSTERA', bounce:true},
+      {sprite:'pinkprincess', x:'70%', y:'55%', name:'PINK PRINCESS', bounce:true},
+    ],
+    dialog:[
+      {speaker:'MONSTERA', text:"* The Monstera notices you."},
+      {speaker:'MONSTERA', text:"oh. it's you. my favorite."},
+      {speaker:'MONSTERA', text:"happy birthday.\ni grew a new leaf. just for you."},
+      {speaker:'PINK PRINCESS', text:"* The Pink Princess Philodendron interrupts."},
+      {speaker:'PINK PRINCESS', text:"EXCUSE me."},
+      {speaker:'PINK PRINCESS', text:"*I* grew a variegated leaf.\nthat's harder. i deserve more praise."},
+      {speaker:'MONSTERA', text:"oh god here we go again."},
+      {speaker:'PINK PRINCESS', text:"shut UP monstera. i\nhave color theory you\ncould only DREAM of."},
+      {speaker:'MONSTERA', text:"i have FENESTRATIONS\nand you have a personality\ndisorder. so."},
+      {speaker:'PINK PRINCESS', text:"...fair."},
+      {choices:[
+        {text:'* Water both equally.',    reply:"* Both plants are satisfied.\n* Diplomacy stat: 100.", score:15},
+        {text:'* "Pink Princess is right."', reply:'MONSTERA: "betrayal."\nPINK PRINCESS: "FINALLY recognition."\n* You water both anyway.', score:10},
+        {text:'* "Monstera is right."',   reply:'PINK PRINCESS: "i will NEVER forgive this."\n* She is dramatic. She forgives by next watering.', score:10},
+        {text:'* Take a photo.',          reply:"* You take a photo.\n* Group chat receives 8 plant photos in 2 minutes.\n* They love it.", score:10},
+      ]}
+    ]
+  },
+
+  // 6 - ASH TEXTS
+  {bg:'phone', sprites:[
+      {sprite:'phone', x:'50%', y:'45%', bounce:true},
+    ],
+    dialog:[
+      {speaker:'JASHAN', text:"* Your phone buzzes."},
+      {speaker:'ASH', text:"* It's Ash."},
+      {speaker:'ASH', text:"happy birthday boogy 🎂\ni miss u so much"},
+      {speaker:'ASH', text:"i made u something\nopen it after the next text ok"},
+      {speaker:'ASH', text:"* (it's this game.)\n* (you're playing it.)\n* (he's very proud of himself.)"},
+      {choices:[
+        {text:'* "miss u poopy"',        reply:'ASH: "i look like the rio bird i KNOW"\n* He sent a selfie.\n* He does look like the rio bird.', score:15},
+        {text:'* "you made a GAME??"',   reply:'ASH: "it took me forever pls love me"\n* You love him.', score:15},
+        {text:'* Send selfie back.',     reply:'ASH: "🥹🥹🥹"\n* Three crying emojis.\n* He is not okay.', score:10},
+        {text:'* "where is my real gift"', reply:'ASH: "the GAME IS THE GIFT JASHAN"\nASH: "but also there\'s a real gift coming"\nASH: "and chocolate"', score:20},
+      ]}
+    ]
+  },
+
+  // 7 - COWS
+  {bg:'farm', sprites:[
+      {sprite:'cow', x:'25%', y:'60%', name:'MOCHI'},
+      {sprite:'cow', x:'50%', y:'55%', name:'DAISY'},
+      {sprite:'cow', x:'75%', y:'60%', name:'BOBA'},
+    ],
+    dialog:[
+      {speaker:'???', text:"* Three cows block your path."},
+      {speaker:'???', text:"* They appear to want something."},
+      {speaker:'MOCHI', text:"moo.\n(translation: birthday pets. now.)"},
+      {speaker:'DAISY', text:"moo.\n(translation: ur 5'2 i can tell)"},
+      {speaker:'BOBA', text:"moo.\n(translation: i was named after a drink.\ni have feelings about this.)"},
+      {speaker:'???', text:"* It's time to pet the cows."},
+      {action:'minigame', mg:'cows'},
+    ]
+  },
+
+  // 8 - AFTER COWS
+  {bg:'farm', sprites:[
+      {sprite:'cow', x:'25%', y:'60%', name:'MOCHI'},
+      {sprite:'cow', x:'50%', y:'55%', name:'DAISY'},
+      {sprite:'cow', x:'75%', y:'60%', name:'BOBA'},
+    ],
+    dialog:[
+      {speaker:'COWS', text:"* The cows are at peace."},
+      {speaker:'DAISY', text:"moo.\n(thank u. ur still 5'2 tho.)"},
+      {speaker:'JASHAN', text:"* You leave them to their grass."},
+    ]
+  },
+
+  // 9 - BUTTERFLIES INTRO
+  {bg:'meadow', sprites:[],
+    dialog:[
+      {speaker:'???', text:"* The garden is full of yellow butterflies today."},
+      {speaker:'???', text:"* Yellow swallowtails."},
+      {speaker:'???', text:"* Your favorite."},
+      {speaker:'???', text:"* They seem to be waiting for you."},
+      {action:'minigame', mg:'butterflies'},
+    ]
+  },
+
+  // 10 - AFTER BUTTERFLIES
+  {bg:'meadow', sprites:[
+      {sprite:'butterfly', x:'25%', y:'40%', bounce:true},
+      {sprite:'butterfly', x:'50%', y:'55%', bounce:true},
+      {sprite:'butterfly', x:'75%', y:'40%', bounce:true},
+    ],
+    dialog:[
+      {speaker:'???', text:"* The butterflies circle you once."},
+      {speaker:'???', text:"* Then they scatter into the sky."},
+      {speaker:'???', text:"* Like a sign."},
+      {speaker:'JASHAN', text:"* Your heart feels full."},
+    ]
+  },
+
+  // 11 - SUDDEN CRAMP — BOSS BATTLE TRIGGER
+  {bg:'dark', sprites:[
+      {sprite:'jashan', x:'50%', y:'55%', name:'JASHAN', bounce:true},
+    ],
+    dialog:[
+      {speaker:'???', text:"* Suddenly..."},
+      {speaker:'???', text:"* A sharp pain."},
+      {speaker:'JASHAN', text:"* ...uh oh."},
+      {speaker:'???', text:"* The temperature drops."},
+      {speaker:'???', text:"* The sky goes red."},
+      {speaker:'???', text:"* Something is coming."},
+      {speaker:'???', text:"* Something terrible."},
+      {speaker:'???', text:"* Something... menstrual."},
+      {action:'battle'},
+    ]
+  },
+
+  // 12 - AFTER BOSS
+  {bg:'meadow', sprites:[
+      {sprite:'jashan', x:'50%', y:'55%', name:'JASHAN', bounce:true},
+    ],
+    dialog:[
+      {speaker:'???', text:"* THE PERIOD MONSTER HAS BEEN DEFEATED."},
+      {speaker:'???', text:"* You are unstoppable."},
+      {speaker:'???', text:"* You took 0 damage."},
+      {speaker:'???', text:"* As predicted by all known science."},
+      {speaker:'JASHAN', text:"* You feel powerful."},
+      {speaker:'JASHAN', text:"* You also feel like ice cream."},
+    ]
+  },
+
+  // 13 - LETTERS MEMORY
+  {bg:'letters', sprites:[
+      {sprite:'letters', x:'50%', y:'50%', name:'MEMORIES', bounce:true},
+    ],
+    dialog:[
+      {speaker:'JASHAN', text:"* You think about something you made for Ash."},
+      {speaker:'JASHAN', text:"* A set of letters."},
+      {speaker:'JASHAN', text:"* Each one labeled for a different feeling."},
+      {speaker:'JASHAN', text:'* "Open when you miss me."'},
+      {speaker:'JASHAN', text:'* "Open when you feel sad."'},
+      {speaker:'JASHAN', text:'* "Open when you need a laugh."'},
+      {speaker:'JASHAN', text:"* (he has read them more times than he'll admit.)"},
+      {type:{
+        sp:'??? * MEMORY',
+        q:'* What did one of those envelopes say?\n* (type anything — there are no wrong answers)',
+        kw:['miss','sad','proud','happy','love','lonely','tired','smile','need','feel','laugh','angry','overwhelmed','open','when'],
+        good:"* That's SO you.\n* You always know what someone needs to hear before they need to hear it.\n* That's not a skill. That's just who you are.",
+        other:"* That's honestly perfect.\n* He probably has one that says exactly that.\n* He re-reads them. Every single one.",
+      }},
+    ]
+  },
+
+  // 14 - PICNIC
+  {bg:'picnic', sprites:[
+      {sprite:'canes', x:'25%', y:'60%', name:"CANE'S"},
+      {sprite:'icecream', x:'50%', y:'55%', name:'HALF BAKED'},
+      {sprite:'soup', x:'75%', y:'60%', name:'HOT & SOUR'},
+    ],
+    dialog:[
+      {speaker:'JASHAN', text:"* A picnic has appeared."},
+      {speaker:'JASHAN', text:"* All your favorites are here."},
+      {speaker:'CANIAC COMBO', text:"sub the coleslaw.\nextra sauce.\nyou know the order."},
+      {speaker:'HALF BAKED', text:"* one (1) pint of Half Baked Ben & Jerry's."},
+      {speaker:'HALF BAKED', text:"* the cookie dough bites are intact."},
+      {speaker:'HALF BAKED', text:"* nobody has touched them."},
+      {speaker:'HALF BAKED', text:"* they are exclusively yours."},
+      {speaker:'HOT & SOUR SOUP', text:"* it's not raining today."},
+      {speaker:'HOT & SOUR SOUP', text:"* but i'm here. just in case."},
+      {choices:[
+        {text:"* Eat Cane's first.",    reply:"* Correct order.\n* The sauce ratio is perfect.", score:15},
+        {text:'* Ice cream first.',     reply:"* Bold. Unconventional. Honestly?\n* Iconic.", score:15},
+        {text:'* All at once.',         reply:"* Chaotic. Ash would be proud.\n* Coho appears, hoping for scraps.", score:20},
+      ]}
+    ]
+  },
+
+  // 15 - COHO STEALS FOOD
+  {bg:'picnic', sprites:[
+      {sprite:'coho', x:'50%', y:'60%', name:'COHO', bounce:true},
+    ],
+    dialog:[
+      {speaker:'???', text:"* Coho appears!"},
+      {speaker:'COHO', text:"BORK! is that food??\nis that for me??"},
+      {speaker:'JASHAN', text:"* Coho is eyeing your chicken tender."},
+      {speaker:'COHO', text:"i would never\n*aggressive eye contact*\nNEVER\nsteal\nyour food"},
+      {speaker:'COHO', text:"* He is absolutely going to steal your food."},
+      {choices:[
+        {text:'* Share one tender.', reply:'COHO: "BEST. DAY. EVER."\n* He is forever loyal.', score:20},
+        {text:'* Block him.',        reply:"* Coho is denied.\n* He sulks. He will get over it.\n* Eventually.", score:5},
+        {text:'* He earned it.',     reply:"* Coho receives the entire combo.\n* You order another one.\n* Worth it.", score:15},
+      ]}
+    ]
+  },
+
+  // 16 - DJUNGELSKUG DANCE
+  {bg:'kitchen', sprites:[
+      {sprite:'djungelskug', x:'50%', y:'55%', name:'DJUNGELSKUG', bounce:true},
+    ],
+    dialog:[
+      {speaker:'DJUNGELSKUG', text:"* Djungelskug is back."},
+      {speaker:'DJUNGELSKUG', text:"* He is doing a dance."},
+      {speaker:'DJUNGELSKUG', text:"come on. you have to\ndo the dance with me.\nit's the rules."},
+      {speaker:'DJUNGELSKUG', text:"i made up the rules.\nand they say:\nbirthday girl dances with monkey."},
+      {speaker:'DJUNGELSKUG', text:"i don't make the rules.\n(i made the rules.)"},
+      {action:'minigame', mg:'rhythm'},
+    ]
+  },
+
+  // 17 - AFTER DANCE
+  {bg:'kitchen', sprites:[
+      {sprite:'jashan', x:'30%', y:'55%', name:'JASHAN', bounce:true},
+      {sprite:'djungelskug', x:'70%', y:'55%', name:'DJUNGELSKUG', bounce:true},
+    ],
+    dialog:[
+      {speaker:'DJUNGELSKUG', text:"* Djungelskug is impressed."},
+      {speaker:'DJUNGELSKUG', text:"okay. that was actually\npretty good."},
+      {speaker:'DJUNGELSKUG', text:"i will mention you in\nmy memoir."},
+      {speaker:'DJUNGELSKUG', text:"\"jashan: she could dance.\nhonestly.\""},
+      {speaker:'DJUNGELSKUG', text:"that's the whole entry.\ni'm not a writer."},
+    ]
+  },
+
+  // 18 - ASH AGAIN
+  {bg:'phone', sprites:[
+      {sprite:'phone', x:'50%', y:'50%'},
+    ],
+    dialog:[
+      {speaker:'ASH', text:"hey are u still playing the game"},
+      {speaker:'ASH', text:"i mean. obviously u are.\nit's right in front of u."},
+      {speaker:'ASH', text:"i just wanted to say"},
+      {speaker:'ASH', text:"youre about to graduate"},
+      {speaker:'ASH', text:"four years of college"},
+      {speaker:'ASH', text:"you watched me struggle through engineering"},
+      {speaker:'ASH', text:"i watched you build a whole design career"},
+      {speaker:'ASH', text:"we did it from like 80 miles away"},
+      {speaker:'ASH', text:"idk.\nthat's wild to me."},
+      {speaker:'ASH', text:"i'm really proud of you boogy"},
+      {speaker:'ASH', text:"okay back to the game.\nthere's something coming up."},
+    ]
+  },
+
+  // 19 - BIRTHDAY PARTY!
+  {bg:'party', sprites:[
+      {sprite:'jashan', x:'50%', y:'55%', name:'JASHAN', bounce:true},
+      {sprite:'ash', x:'30%', y:'55%', name:'ASH'},
+      {sprite:'guest1', x:'15%', y:'62%', name:'FRIEND'},
+      {sprite:'guest2', x:'72%', y:'62%', name:'FRIEND'},
+      {sprite:'guest3', x:'85%', y:'58%', name:'FRIEND'},
+      {sprite:'balloons', x:'8%', y:'25%'},
+      {sprite:'balloons', x:'92%', y:'25%'},
+    ],
+    dialog:[
+      {speaker:'???', text:"* You walk into a room."},
+      {speaker:'???', text:"* The lights come on."},
+      {speaker:'EVERYONE', text:"SURPRISE!!!"},
+      {speaker:'JASHAN', text:"* It's your friends."},
+      {speaker:'JASHAN', text:"* It's Ash."},
+      {speaker:'JASHAN', text:"* HE FLEW IN??"},
+      {speaker:'ASH', text:"surprise boogy 🥹"},
+      {speaker:'ASH', text:"sorry the game ran long.\nthat was on purpose.\ni was waiting for you to get here."},
+      {speaker:'ASH', text:"i couldn't miss this.\n22 only happens once."},
+      {choices:[
+        {text:'* Hug Ash.',          reply:"* You hug him.\n* He is crying. He is trying to hide it.\n* He is failing.", score:25},
+        {text:'* Hug everyone.',     reply:"* Group hug initiated.\n* Coho jumps in. Djungelskug jumps in.\n* Maximum love achieved.", score:25},
+        {text:'* "POOPY!! you came!!"', reply:'ASH: "of course i came i\'m ur poopy"\n* He kisses your forehead.\n* Everyone says \"awwww\" loudly.', score:30},
+      ]}
+    ]
+  },
+
+  // 20 - CAKE
+  {bg:'finale', sprites:[
+      {sprite:'cake', x:'50%', y:'50%', name:'BIRTHDAY CAKE', bounce:true},
+    ],
+    dialog:[
+      {speaker:'???', text:"* The cake comes out."},
+      {speaker:'???', text:'* It says "HAPPY 22 JASHAN" in frosting.'},
+      {speaker:'???', text:"* The frosting is uneven."},
+      {speaker:'???', text:"* Ash made it himself."},
+      {speaker:'???', text:"* He tried his best."},
+      {speaker:'???', text:"* Everyone sings happy birthday."},
+      {speaker:'???', text:"* Off-key. Beautifully."},
+      {speaker:'JASHAN', text:"* You make a wish."},
+      {choices:[
+        {text:'* Blow out the candles.', reply:"* You blow out the candles.\n* The room fills with light.\n* Your wish? You'll never tell.", score:30, action:'finale'},
+      ]}
+    ]
+  },
+];
+
+// ═══════════════════════════════════════════════════════════
+// BACKGROUNDS
+// ═══════════════════════════════════════════════════════════
+const BG_STYLES = {
+  black:  {color:'#000', stars:false},
+  room:   {color:'#1a0a1f', stars:false, gradient:'linear-gradient(180deg,#2a1a3a 0%,#1a0a1f 100%)'},
+  kitchen:{color:'#1f1a0a', stars:false, gradient:'linear-gradient(180deg,#3a2a0a 0%,#1f1a0a 100%)'},
+  plants: {color:'#0a1f0a', stars:false, gradient:'linear-gradient(180deg,#1a3a1a 0%,#0a1f0a 100%)'},
+  phone:  {color:'#000', stars:true},
+  farm:   {color:'#1f1a0a', stars:false, gradient:'linear-gradient(180deg,#3a3a0a 0%,#1f2a0a 50%,#0a1f0a 100%)'},
+  meadow: {color:'#0a1a2f', stars:false, gradient:'linear-gradient(180deg,#1a3a5a 0%,#3a2a5a 100%)'},
+  letters:{color:'#1a0a1a', stars:true, gradient:'linear-gradient(180deg,#2a1a3a 0%,#1a0a1f 100%)'},
+  picnic: {color:'#1f1a0a', stars:false, gradient:'linear-gradient(180deg,#3a3a1a 0%,#2a2a0a 100%)'},
+  finale: {color:'#1a0a1a', stars:true, gradient:'linear-gradient(180deg,#3a1a3a 0%,#2a1a4a 50%,#1a0a3a 100%)'},
+  dark:   {color:'#1a0000', stars:false, gradient:'linear-gradient(180deg,#5a0000 0%,#1a0000 100%)'},
+  party:  {color:'#1a0a3a', stars:true, gradient:'linear-gradient(180deg,#4a1a6a 0%,#1a0a3a 100%)'},
+};
+
+function applyBackground(bg) {
+  const style = BG_STYLES[bg] || BG_STYLES.black;
+  const area = document.getElementById('scene-area');
+  area.style.background = style.gradient || style.color;
+  const starsEl = document.getElementById('bg-stars');
+  starsEl.innerHTML = '';
+  if (style.stars) {
+    for (let i = 0; i < 50; i++) {
+      const s = document.createElement('div');
+      s.className = 'bg-star';
+      s.style.left = Math.random() * 100 + '%';
+      s.style.top = Math.random() * 100 + '%';
+      s.style.animationDelay = Math.random() * 2 + 's';
+      s.style.animationDuration = (1 + Math.random() * 2) + 's';
+      starsEl.appendChild(s);
+    }
+  }
+}
+
+function renderSprites(sprites) {
+  const content = document.getElementById('scene-content');
+  content.querySelectorAll('.sprite-container').forEach(el => el.remove());
+  if (!sprites || sprites.length === 0) return;
+  sprites.forEach(sp => {
+    const wrap = document.createElement('div');
+    wrap.className = 'sprite-container' + (sp.bounce ? ' sprite-bounce' : '');
+    wrap.style.left = sp.x;
+    wrap.style.top = sp.y;
+    const svg = SPRITES[sp.sprite] || '';
+    wrap.innerHTML = svg + (sp.name ? `<div class="sprite-name">${sp.name}</div>` : '');
+    content.appendChild(wrap);
+  });
+}
+
+async function loadScene(idx) {
+  if (idx >= SCENES.length) { openFinale(); return; }
+  const scene = SCENES[idx];
+  const fade = document.getElementById('fade');
+  fade.classList.add('active');
+  await sleep(300);
+  applyBackground(scene.bg);
+  renderSprites(scene.sprites);
+  updateProgressDots(idx);
+  fade.classList.remove('active');
+  await sleep(200);
+  S.dialogQueue = [...scene.dialog];
+  processDialogQueue();
+}
+
+function updateProgressDots(idx) {
+  const dots = document.getElementById('progress-dots');
+  dots.innerHTML = '';
+  for (let i = 0; i < SCENES.length; i++) {
+    const d = document.createElement('div');
+    d.className = 'pdot' + (i === idx ? ' active' : i < idx ? ' done' : '');
+    dots.appendChild(d);
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+// DIALOG
+// ═══════════════════════════════════════════════════════════
+function processDialogQueue() {
+  if (S.dialogQueue.length === 0) { nextScene(); return; }
+  const item = S.dialogQueue.shift();
+  if (item.action) { handleAction(item); return; }
+  if (item.choices) { showChoices(item.choices); return; }
+  if (item.type) { showTypeInput(item.type); return; }
+  showDialogLine(item);
+}
+
+function showDialogLine(item) {
+  const speaker = typeof item === 'string' ? '' : item.speaker;
+  const text = typeof item === 'string' ? item : item.text;
+  document.getElementById('dialog-box').style.display = 'block';
+  document.getElementById('choices-box').style.display = 'none';
+  document.getElementById('type-box').style.display = 'none';
+  if (speaker) {
+    document.getElementById('dialog-speaker').textContent = speaker;
+    document.getElementById('dialog-speaker').style.display = 'block';
+  } else {
+    document.getElementById('dialog-speaker').style.display = 'none';
+  }
+  S.fullText = text;
+  S.typing = true;
+  const el = document.getElementById('dialog-text');
+  el.textContent = '';
+  document.getElementById('dialog-arrow').style.display = 'none';
+  let i = 0;
+  clearInterval(S.typingTimer);
+  S.typingTimer = setInterval(() => {
+    if (i >= text.length) {
+      clearInterval(S.typingTimer);
+      S.typing = false;
+      document.getElementById('dialog-arrow').style.display = 'block';
+      S.awaitingTap = true;
+      return;
+    }
+    el.textContent += text[i++];
+  }, 28);
+}
+
+function advanceDialog() {
+  if (S.typing) {
+    clearInterval(S.typingTimer);
+    S.typing = false;
+    document.getElementById('dialog-text').textContent = S.fullText;
+    document.getElementById('dialog-arrow').style.display = 'block';
+    S.awaitingTap = true;
+    return;
+  }
+  if (S.awaitingTap) {
+    S.awaitingTap = false;
+    document.getElementById('dialog-arrow').style.display = 'none';
+    processDialogQueue();
+  }
+}
+
+function showChoices(choices) {
+  document.getElementById('dialog-text').textContent = '* What do you do?';
+  document.getElementById('dialog-arrow').style.display = 'none';
+  S.awaitingTap = false;
+  const box = document.getElementById('choices-box');
+  box.style.display = 'flex';
+  box.innerHTML = '';
+  choices.forEach(c => {
+    const el = document.createElement('button');
+    el.className = 'choice';
+    el.textContent = c.text;
+    el.onclick = (e) => { e.stopPropagation(); pickChoice(c); };
+    box.appendChild(el);
+  });
+  S.choices = choices;
+}
+
+function pickChoice(choice) {
+  document.getElementById('choices-box').style.display = 'none';
+  S.choices = null;
+  if (choice.score) { S.gold += choice.score; updateHUD(); showFloater('+' + choice.score + 'G'); }
+  if (choice.flag) { S.flags[choice.flag] = choice.value; }
+  if (choice.action === 'finale') { setTimeout(() => openFinale(), 1500); showDialogLine({speaker:'???', text:choice.reply}); return; }
+  S.dialogQueue.unshift({speaker:'???', text:choice.reply});
+  processDialogQueue();
+}
+
+function showTypeInput(data) {
+  S.typeData = data;
+  document.getElementById('dialog-speaker').textContent = data.sp || '???';
+  document.getElementById('dialog-text').textContent = data.q;
+  document.getElementById('dialog-arrow').style.display = 'none';
+  S.awaitingTap = false;
+  document.getElementById('choices-box').style.display = 'none';
+  document.getElementById('type-box').style.display = 'block';
+  const inp = document.getElementById('type-input');
+  inp.value = '';
+  setTimeout(() => inp.focus(), 100);
+}
+
+window.submitType = function() {
+  const val = document.getElementById('type-input').value.trim().toLowerCase();
+  if (!val || !S.typeData) return;
+  document.getElementById('type-box').style.display = 'none';
+  const d = S.typeData;
+  S.typeData = null;
+  S.gold += 25;
+  updateHUD();
+  showFloater('+25G');
+  const matched = d.kw.some(k => val.includes(k));
+  S.dialogQueue.unshift({speaker:'???', text: matched ? d.good : d.other});
+  processDialogQueue();
+};
+
+document.getElementById('type-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter') { e.preventDefault(); window.submitType(); }
+  e.stopPropagation();
+});
+
+function handleAction(item) {
+  if (item.action === 'minigame') openMg(item.mg);
+  else if (item.action === 'restoreHP') {
+    S.hp = S.hpMax;
+    updateHUD();
+    showFloater('HP RESTORED');
+    setTimeout(() => processDialogQueue(), 800);
+  }
+  else if (item.action === 'battle') openBattle();
+}
+
+function nextScene() {
+  document.getElementById('dialog-box').style.display = 'none';
+  S.scene++;
+  loadScene(S.scene);
+}
+
+// ═══════════════════════════════════════════════════════════
+// MINIGAMES
+// ═══════════════════════════════════════════════════════════
+function openMg(type) {
+  document.getElementById('dialog-box').style.display = 'none';
+  document.getElementById('mg-box').style.display = 'flex';
+  const arena = document.getElementById('mg-arena');
+  const status = document.getElementById('mg-status');
+  const close = document.getElementById('mg-close');
+  const title = document.getElementById('mg-title');
+  close.style.display = 'none';
+  arena.innerHTML = '';
+
+  if (type === 'chai') {
+    title.textContent = '* BREW THE CHAI - TAP THE CUP 12 TIMES';
+    let taps = 0, needed = 12;
+    arena.innerHTML = `
+      <div id="chai-cup" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);cursor:pointer;user-select:none;transition:transform 0.08s;">
+        ${SPRITES.chai}
+      </div>
+      <div id="chai-fill" style="position:absolute;bottom:0;left:0;right:0;height:0%;background:linear-gradient(180deg,#ffd166,#c47a2b);transition:height 0.15s;opacity:0.3;pointer-events:none;"></div>
+    `;
+    status.textContent = `* TAPS: 0 / ${needed}`;
+    const cup = document.getElementById('chai-cup');
+    const tap = (e) => {
+      e && e.preventDefault();
+      taps++;
+      cup.style.transform = 'translate(-50%, -50%) scale(0.85) rotate(-12deg)';
+      setTimeout(() => cup.style.transform = 'translate(-50%, -50%)', 90);
+      document.getElementById('chai-fill').style.height = (taps/needed*100) + '%';
+      spawnPixelParticles(arena, ['#ffd166','#c47a2b','#fff'], cup.offsetLeft+30, cup.offsetTop+30);
+      S.gold += 3;
+      updateHUD();
+      status.textContent = `* TAPS: ${taps} / ${needed}`;
+      if (taps >= needed) {
+        S.flags.chaiBrewed = true;
+        S.gold += 40;
+        updateHUD();
+        title.textContent = '* CHAI ACHIEVED';
+        status.innerHTML = '* PERFECTLY BREWED.<br>* +40 G';
+        close.style.display = 'inline-block';
+        cup.style.pointerEvents = 'none';
+      }
+    };
+    cup.addEventListener('click', tap);
+    cup.addEventListener('touchstart', tap, {passive:false});
+  }
+
+  else if (type === 'cows') {
+    title.textContent = '* PET ALL 3 COWS - CLICK EACH 3 TIMES';
+    const cows = [
+      {n:'MOCHI', q:['MOO!','MOO!!','MOO!!!']},
+      {n:'DAISY', q:["ur 5'2 tho","i still love u","MOOOOO"]},
+      {n:'BOBA',  q:['named after a drink',"it's fine i'm fine",'MOO 💛']},
+    ];
+    let counts = [0,0,0];
+    arena.innerHTML = `
+      <div style="display:flex;gap:14px;justify-content:center;align-items:center;height:100%;padding:10px;">
+        ${cows.map((c,i) => `
+          <div style="text-align:center;cursor:pointer;user-select:none;transform:scale(0.65);transform-origin:center;" id="cow-${i}">
+            <div style="height:60px;display:flex;align-items:center;justify-content:center;">${SPRITES.cow}</div>
+            <div style="font-family:'Press Start 2P',monospace;font-size:7px;color:#fff;margin-top:4px;">${c.n}</div>
+            <div style="font-family:'Press Start 2P',monospace;font-size:9px;color:#ff5050;margin-top:2px;" id="hp-${i}">♥♥♥</div>
+          </div>
+        `).join('')}
+      </div>
+    `;
+    status.textContent = '* PET EACH COW 3 TIMES';
+    cows.forEach((c, i) => {
+      const el = document.getElementById('cow-' + i);
+      const tap = (e) => {
+        e && e.preventDefault();
+        if (counts[i] >= 3) return;
+        counts[i]++;
+        document.getElementById('hp-' + i).textContent = '♥'.repeat(counts[i]) + '♡'.repeat(3 - counts[i]);
+        status.textContent = '* ' + c.q[counts[i] - 1];
+        S.gold += 8;
+        updateHUD();
+        el.style.transform = 'scale(0.75)';
+        setTimeout(() => el.style.transform = 'scale(0.65)', 150);
+        spawnPixelParticles(arena, ['#ff5050','#fff','#ffd166'], el.offsetLeft + 25, el.offsetTop + 30);
+        if (counts.every(v => v >= 3)) {
+          setTimeout(() => {
+            title.textContent = '* COWS PETTED';
+            status.innerHTML = '* MOOOO!!<br>* +50 G';
+            S.gold += 50;
+            S.flags.cowsPet = true;
+            updateHUD();
+            close.style.display = 'inline-block';
+          }, 600);
+        }
+      };
+      el.addEventListener('click', tap);
+      el.addEventListener('touchstart', tap, {passive:false});
+    });
+  }
+
+  else if (type === 'butterflies') {
+    title.textContent = '* CATCH 5 BUTTERFLIES';
+    let caught = 0, needed = 5;
+    status.textContent = `* CAUGHT: 0 / ${needed}`;
+    for (let i = 0; i < 7; i++) {
+      const bf = document.createElement('div');
+      bf.style.cssText = `position:absolute;cursor:pointer;user-select:none;left:${5+Math.random()*80}%;top:${5+Math.random()*70}%;transition:left 1.4s ease, top 1.4s ease;transform:scale(0.7);transform-origin:center;`;
+      bf.innerHTML = SPRITES.butterfly;
+      const moveAround = setInterval(() => {
+        if (!arena.contains(bf)) { clearInterval(moveAround); return; }
+        bf.style.left = (5 + Math.random() * 80) + '%';
+        bf.style.top = (5 + Math.random() * 75) + '%';
+      }, 1500);
+      const catchIt = (e) => {
+        e && e.preventDefault();
+        if (bf.style.opacity === '0.15') return;
+        bf.style.opacity = '0.15';
+        bf.style.pointerEvents = 'none';
+        clearInterval(moveAround);
+        caught++;
+        S.gold += 8;
+        updateHUD();
+        status.textContent = `* CAUGHT: ${caught} / ${needed}`;
+        spawnPixelParticles(arena, ['#ffd166','#fff','#ff5050'], bf.offsetLeft, bf.offsetTop);
+        if (caught >= needed) {
+          setTimeout(() => {
+            title.textContent = '* BUTTERFLIES CAUGHT';
+            status.innerHTML = '* THEY ALWAYS FIND YOU.<br>* +45 G';
+            S.gold += 45;
+            S.flags.butterfliesCaught = true;
+            updateHUD();
+            close.style.display = 'inline-block';
+          }, 400);
+        }
+      };
+      bf.addEventListener('click', catchIt);
+      bf.addEventListener('touchstart', catchIt, {passive:false});
+      arena.appendChild(bf);
+    }
+  }
+
+  else if (type === 'rhythm') {
+    title.textContent = "* DANCE WITH DJUNGELSKUG\n* TAP THE ARROWS WHEN THEY HIT THE LINE";
+    let hits = 0, needed = 8, totalSpawned = 0;
+    arena.innerHTML = `
+      <div id="rhythm-line" style="position:absolute;top:160px;left:0;right:0;height:3px;background:#ffd166;"></div>
+      <div id="rhythm-zones" style="position:absolute;top:140px;left:0;right:0;height:40px;display:flex;justify-content:space-around;align-items:center;">
+        <div class="rhythm-zone" data-dir="left" style="width:30px;height:30px;border:2px solid #fff;display:flex;align-items:center;justify-content:center;color:#888;font-size:18px;cursor:pointer;font-family:'Press Start 2P';">←</div>
+        <div class="rhythm-zone" data-dir="up" style="width:30px;height:30px;border:2px solid #fff;display:flex;align-items:center;justify-content:center;color:#888;font-size:18px;cursor:pointer;font-family:'Press Start 2P';">↑</div>
+        <div class="rhythm-zone" data-dir="down" style="width:30px;height:30px;border:2px solid #fff;display:flex;align-items:center;justify-content:center;color:#888;font-size:18px;cursor:pointer;font-family:'Press Start 2P';">↓</div>
+        <div class="rhythm-zone" data-dir="right" style="width:30px;height:30px;border:2px solid #fff;display:flex;align-items:center;justify-content:center;color:#888;font-size:18px;cursor:pointer;font-family:'Press Start 2P';">→</div>
+      </div>
+    `;
+    status.textContent = `* HITS: 0 / ${needed}`;
+
+    const arrows = ['←','↑','↓','→'];
+    const dirs = ['left','up','down','right'];
+    const xs = [12, 38, 62, 88];
+    const activeArrows = [];
+
+    const spawnArrow = () => {
+      if (totalSpawned >= 12) return;
+      const idx = Math.floor(Math.random() * 4);
+      const arr = document.createElement('div');
+      arr.className = 'rhythm-arrow';
+      arr.dataset.dir = dirs[idx];
+      arr.dataset.alive = '1';
+      arr.textContent = arrows[idx];
+      arr.style.left = xs[idx] + '%';
+      arr.style.transform = 'translateX(-50%)';
+      arena.appendChild(arr);
+      activeArrows.push(arr);
+      totalSpawned++;
+      setTimeout(() => {
+        if (arr.dataset.alive === '1') {
+          arr.dataset.alive = '0';
+          arr.remove();
+          // miss
+          if (totalSpawned >= 12 && activeArrows.every(a => a.dataset.alive !== '1')) {
+            checkRhythmEnd();
+          }
+        }
+      }, 2100);
+    };
+
+    const checkRhythmEnd = () => {
+      if (hits >= needed) {
+        setTimeout(() => {
+          title.textContent = '* DANCE PERFECTED';
+          status.innerHTML = '* DJUNGELSKUG IS IMPRESSED.<br>* +50 G';
+          S.gold += 50;
+          S.flags.rhythmDanced = true;
+          updateHUD();
+          close.style.display = 'inline-block';
+        }, 400);
+      } else {
+        setTimeout(() => {
+          title.textContent = '* GOOD ENOUGH';
+          status.innerHTML = `* You hit ${hits} / ${needed}.<br>* Djungelskug accepts this.`;
+          S.gold += 25;
+          updateHUD();
+          close.style.display = 'inline-block';
+        }, 400);
+      }
+    };
+
+    const checkHit = (dir) => {
+      // Find any arrow of this direction near the line
+      const target = activeArrows.find(a => {
+        if (a.dataset.alive !== '1') return false;
+        if (a.dataset.dir !== dir) return false;
+        const top = parseFloat(a.style.top || '0');
+        return top > 130 && top < 190;
+      });
+      if (target) {
+        target.dataset.alive = '0';
+        target.style.color = '#00ff66';
+        target.style.transform = 'translateX(-50%) scale(1.5)';
+        target.style.transition = 'all 0.2s';
+        setTimeout(() => target.remove(), 200);
+        hits++;
+        S.gold += 5;
+        updateHUD();
+        status.textContent = `* HITS: ${hits} / ${needed}`;
+        spawnPixelParticles(arena, ['#00ff66','#ffd166'], xs[dirs.indexOf(dir)] * arena.offsetWidth / 100, 160);
+        if (hits >= needed) {
+          // Stop spawning, end soon
+          totalSpawned = 999;
+          setTimeout(checkRhythmEnd, 500);
+        }
+      }
+    };
+
+    arena.querySelectorAll('.rhythm-zone').forEach(z => {
+      const tap = (e) => { e && e.preventDefault(); checkHit(z.dataset.dir); };
+      z.addEventListener('click', tap);
+      z.addEventListener('touchstart', tap, {passive:false});
+    });
+
+    // Spawn arrows
+    let spawnCount = 0;
+    const spawner = setInterval(() => {
+      if (spawnCount >= 12) { clearInterval(spawner); return; }
+      spawnArrow();
+      spawnCount++;
+    }, 700);
+  }
+}
+
+window.closeMg = function() {
+  document.getElementById('mg-box').style.display = 'none';
+  processDialogQueue();
+};
+
+// ═══════════════════════════════════════════════════════════
+// BOSS BATTLE — THE PERIOD MONSTER
+// ═══════════════════════════════════════════════════════════
+const BOSS = {
+  hp: 100, hpMax: 100,
+  defeated: false,
+  attacks: [
+    "* The Period Monster summons CRAMPS!\n* They bounce off you harmlessly.",
+    "* The Period Monster casts BLOATING!\n* You shrug. Nothing happens.",
+    "* The Period Monster screams MOOD SWING!\n* You vibe through it.",
+    "* The Period Monster releases CHOCOLATE CRAVINGS!\n* You eat the chocolate. You gain power.",
+    "* The Period Monster summons FATIGUE!\n* You took a nap. You're refreshed.",
+    "* The Period Monster casts BACK PAIN!\n* Your hot water bottle absorbs it.",
+  ],
+  taunts: [
+    "PERIOD MONSTER: \"FEAR ME...\"",
+    "PERIOD MONSTER: \"why are you not in pain??\"",
+    "PERIOD MONSTER: \"this has never happened before...\"",
+    "PERIOD MONSTER: \"i'm getting tired...\"",
+    "PERIOD MONSTER: \"please... just take SOME damage...\"",
+    "PERIOD MONSTER: \"this is humiliating.\"",
+  ],
+};
+
+const MOVES = [
+  {name:'HOT WATER BOTTLE', icon:'🔥', dmg:18, msg:"* Jashan summons a HOT WATER BOTTLE!\n* The Period Monster recoils!"},
+  {name:'MIDOL STRIKE',     icon:'💊', dmg:22, msg:"* Jashan uses MIDOL STRIKE!\n* It's super effective!"},
+  {name:'CHOCOLATE SHIELD', icon:'🍫', dmg:14, msg:"* Jashan eats CHOCOLATE!\n* Healing power +999. Damage +14."},
+  {name:'CUDDLE FROM ASH',  icon:'💛', dmg:30, msg:"* Jashan calls Ash for emotional support.\n* The hug deals MASSIVE damage to the monster!"},
+  {name:'NAP',              icon:'😴', dmg:12, msg:"* Jashan takes a quick nap.\n* The monster waits politely.\n* Then takes 12 damage."},
+  {name:'TALK',             icon:'💬', dmg:0,  msg:"* Jashan tries to reason with the Period Monster.\n* It cries. This was never personal.\n* (no damage but very emotional)"},
+];
+
+function openBattle() {
+  document.getElementById('dialog-box').style.display = 'none';
+  document.getElementById('battle-box').style.display = 'flex';
+  BOSS.hp = BOSS.hpMax;
+  BOSS.defeated = false;
+  document.getElementById('battle-enemy-sprite').innerHTML = SPRITES.period_monster;
+  document.getElementById('battle-enemy-sprite').classList.add('sprite-bounce');
+  updateBossUI();
+  setBattleDialog("* THE PERIOD MONSTER appeared!\n* It looks angry and crampy.");
+  renderBattleActions();
+}
+
+function setBattleDialog(text) {
+  document.getElementById('battle-dialog').textContent = text;
+}
+
+function updateBossUI() {
+  const pct = (BOSS.hp / BOSS.hpMax) * 100;
+  document.getElementById('battle-enemy-hp-fill').style.width = pct + '%';
+  document.getElementById('battle-enemy-hp-text').textContent = `${BOSS.hp}/${BOSS.hpMax}`;
+}
+
+function renderBattleActions() {
+  const container = document.getElementById('battle-actions');
+  container.innerHTML = '';
+  MOVES.forEach((m, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'battle-btn';
+    btn.innerHTML = `<span class="b-icon">${m.icon}</span><span>${m.name}</span>`;
+    btn.onclick = () => useMove(i);
+    container.appendChild(btn);
+  });
+}
+
+function useMove(idx) {
+  if (BOSS.defeated) return;
+  const move = MOVES[idx];
+  // Disable buttons during animation
+  document.querySelectorAll('.battle-btn').forEach(b => b.disabled = true);
+
+  // Player attacks
+  setBattleDialog(move.msg);
+  const sprite = document.getElementById('battle-enemy-sprite');
+  sprite.classList.remove('sprite-bounce');
+  sprite.classList.add('sprite-shake');
+  document.getElementById('battle-box').classList.add('shake');
+  spawnDamageNumber(move.dmg, 'yellow');
+  spawnPixelParticles(document.getElementById('battle-enemy'), ['#ff5050','#ffd166','#fff'], 320, 100);
+
+  setTimeout(() => {
+    sprite.classList.remove('sprite-shake');
+    sprite.classList.add('sprite-bounce');
+    document.getElementById('battle-box').classList.remove('shake');
+    BOSS.hp -= move.dmg;
+    if (BOSS.hp <= 0) {
+      BOSS.hp = 0;
+      BOSS.defeated = true;
+      updateBossUI();
+      defeatBoss();
+      return;
+    }
+    updateBossUI();
+    // Boss "attacks" but does nothing
+    setTimeout(() => {
+      const attackIdx = Math.floor(Math.random() * BOSS.attacks.length);
+      const tauntIdx = Math.min(BOSS.taunts.length - 1, BOSS.hpMax - BOSS.hp > 60 ? 5 : BOSS.hpMax - BOSS.hp > 40 ? 4 : BOSS.hpMax - BOSS.hp > 20 ? 3 : 1);
+      setBattleDialog(BOSS.attacks[attackIdx] + "\n" + BOSS.taunts[Math.floor(Math.random()*Math.max(1, tauntIdx+1))]);
+      spawnDamageNumber('MISS', 'miss');
+      setTimeout(() => {
+        document.querySelectorAll('.battle-btn').forEach(b => b.disabled = false);
+      }, 800);
+    }, 1500);
+  }, 800);
+}
+
+function spawnDamageNumber(text, color) {
+  const arena = document.getElementById('battle-enemy');
+  const num = document.createElement('div');
+  num.className = `dmg-num dmg-${color}`;
+  num.textContent = text;
+  num.style.left = (40 + Math.random() * 30) + '%';
+  num.style.top = '40%';
+  arena.appendChild(num);
+  setTimeout(() => num.remove(), 1000);
+}
+
+function defeatBoss() {
+  S.flags.monsterDefeated = true;
+  setBattleDialog("* THE PERIOD MONSTER WAS DEFEATED!\n* It crumbles into dust.\n* It was never a worthy opponent.\n* +200 G");
+  S.gold += 200;
+  updateHUD();
+  document.getElementById('battle-enemy-sprite').innerHTML = '';
+  document.querySelectorAll('.battle-btn').forEach(b => b.disabled = true);
+
+  spawnPixelParticles(document.getElementById('battle-enemy'), ['#ff5050','#ffd166','#fff','#ff80a0'], 320, 100);
+  spawnPixelParticles(document.getElementById('battle-enemy'), ['#ff5050','#ffd166','#fff'], 160, 150);
+  spawnPixelParticles(document.getElementById('battle-enemy'), ['#ff5050','#ffd166','#fff'], 480, 150);
+
+  setTimeout(() => {
+    const container = document.getElementById('battle-actions');
+    container.innerHTML = '<button class="battle-btn" style="grid-column: 1 / -1;" onclick="closeBattle()"><span>[ CONTINUE ]</span></button>';
+  }, 1800);
+}
+
+window.closeBattle = function() {
+  document.getElementById('battle-box').style.display = 'none';
+  processDialogQueue();
+};
+
+// ═══════════════════════════════════════════════════════════
+// FINALE
+// ═══════════════════════════════════════════════════════════
+function openFinale() {
+  document.getElementById('dialog-box').style.display = 'none';
+  document.getElementById('finale').style.display = 'block';
+  spawnFinaleParticles();
+  document.getElementById('finale').innerHTML = `
+    <div style="text-align:center;margin:20px 0;animation:heartbeat 1s ease-in-out infinite;">
+      <svg width="64" height="56" viewBox="0 0 12 11" shape-rendering="crispEdges">
+        <path fill="#ff3838" d="M2 1h2v1H2zM6 1h2v1H6zM1 2h4v1H1zM5 2h-1zM7 2h4v1H7zM1 3h10v1H1zM1 4h10v1H1zM2 5h8v1H2zM3 6h6v1H3zM4 7h4v1H4zM5 8h2v1H5zM6 9h0v1z"/>
+      </svg>
+    </div>
+    <div class="fin-title">★ HAPPY 22ND BIRTHDAY ★<br>JASHAN</div>
+    <div class="fin-stars">
+      ${[SPRITES.butterfly, SPRITES.cow, SPRITES.djungelskug, SPRITES.coho, SPRITES.monstera, SPRITES.chai, SPRITES.letters, SPRITES.heart_small].map(s => `<div style="transform:scale(0.4);transform-origin:center;display:inline-block;">${s}</div>`).join('')}
+    </div>
+
+    <div class="fin-section">
+      <h2>* JOURNEY COMPLETE</h2>
+      <div class="fin-stat-row"><span>* GOLD EARNED</span><span>${S.gold}G</span></div>
+      <div class="fin-stat-row"><span>* HP</span><span>∞/∞</span></div>
+      <div class="fin-stat-row"><span>* CHAI BREWED</span><span>${S.flags.chaiBrewed ? 'YES' : 'NO'}</span></div>
+      <div class="fin-stat-row"><span>* COWS PETTED</span><span>${S.flags.cowsPet ? 'YES' : 'NO'}</span></div>
+      <div class="fin-stat-row"><span>* BUTTERFLIES</span><span>${S.flags.butterfliesCaught ? 'CAUGHT' : '—'}</span></div>
+      <div class="fin-stat-row"><span>* PERIOD MONSTER</span><span>${S.flags.monsterDefeated ? 'DEFEATED' : '—'}</span></div>
+      <div class="fin-stat-row"><span>* DAMAGE TAKEN</span><span>0 (INVINCIBLE)</span></div>
+      <div class="fin-stat-row"><span>* DJUNGELSKUG DANCE</span><span>${S.flags.rhythmDanced ? 'PERFECT' : 'GOOD ENOUGH'}</span></div>
+      <div class="fin-stat-row"><span>* COHO CRIMES</span><span>MULTIPLE</span></div>
+    </div>
+
+    <div class="fin-section">
+      <h2>* A LETTER FROM ASH</h2>
+      <br>
+      <p>Hey Boogy 💛</p>
+      <br>
+      <p>Happy birthday baby. Genuinely can't believe that my baby is now just as old as me, youre so old! OKAY IM KIDDING. But this year has been so special, and I'm really glad I could be apart of it. </p>
+      <br>
+      <p>I made this whole game because I know you'd rather have something made than something bought. You're the kind of person who carefully spends lots of time, energy, and thought into creating the sweetest messages and crafts. You're incredibly detail-oriented, an it really shows all the hard effort you put into your work. You always pour so much love into everything you make, and I wanted to do the same.</p>
+      <br>
+      <p>I know long distance is hard. too baby. What I miss most is just being in your prescence: feeling loved and cared for, sharing physical and sensual moments, listening to your cutesy little giggles and laughs, being quiet and staring at your beautiful eyes, holding your hand and walking through the rain on a stormy day, just simply being with you, my love. But even from far away you always never fail to make me feel that same love, with every interaction we share and memory we make.</p>
+      <br>
+      <p>I got to watch you work toward graduating for four years. Seeing your fiery passion and drive, how you neverfail to work towards a goal, and relentlessy push yourself to achieve greater heights. Like whenever you put your mind to something, you go out there and you really DO it. Not that many people stan by their words, but you do. because of that, you motivate me to push myself, and reach for the stars, you are an inspiration jaan. I am so proud and admirable of you. Genuinely baby.</p>
+      <br>
+      <p>I love how you are always so down to earth and willing to do whats right. I love that Djungelskug is your whole personality and your entire birthday party theme TEEHEE. I love how you put me on half baked ben and jerry's and now you make me more of an ice cream fanatic. I love the letters you made me and the amount of thought and care that went into it. I love how you took the time out to make and craft me a dashcund plushie, the same one from my childhood. I love how youre always so understanding and kind, and you always keep in my positive spirts, when times get rough.</p>
+      <br>
+      <p>You deserve every good thing this year... and I can't wait to spend the following years with you, being your special person, celebrating the future and memories we create together :) '</p>
+      <br>
+      <p>Happy 22nd to my lil Boogy. You're my favorite person <3</p>
+      <br>
+      <p>— Ash 🐦</p>
+      <p style="font-size:14px;color:#888;">(yes i know i look like the rio bird. djungelskug confirmed it.)</p>
+    </div>
+
+    <div class="fin-section">
+      <h2>* TRUE THINGS ABOUT YOU</h2>
+      <ul>
+        <li>You are my boogy.</li>
+        <li>4 years of UI/UX at Davis. Graduating in a month. They are not ready for my baby.</li>
+        <li>Your plants are better cared for than most people manage their whole lives. (The pressed flowers speak for themselves).</li>
+        <li>You named an IKEA monkey Djungelskug and made him your party theme. Iconic, you should get an IKEA sponsorship.</li>
+        <li>You make things with your hands that are more functional that some products. Yiu literally made a Polaroid from scratch.</li>
+        <li>You know the perfect chai order. You will not negotiate. Correct.</li>
+        <li>You took 0 damage from the Period Monster. Canonically invincible. You really are a dominatrix.</li>
+        <li>You are kind, driven, creative, and deeply loved. Happy 22nd baby :D.</li>
+      </ul>
+    </div>
+
+    <button class="fin-btn" onclick="location.reload()">[ PLAY AGAIN ]</button>
+    <div class="fin-credit">★ MADE WITH ♥ BY ASH ★<br>FOR JASHAN'S 22ND BIRTHDAY</div>
+  `;
+}
+
+function spawnFinaleParticles() {
+  const colors = ['#ff5050','#ffd166','#fff','#ff80a0','#80c0ff'];
+  for (let i = 0; i < 30; i++) {
+    setTimeout(() => {
+      const p = document.createElement('div');
+      p.className = 'ptcl';
+      p.style.background = colors[Math.floor(Math.random() * colors.length)];
+      p.style.position = 'fixed';
+      p.style.left = Math.random() * 100 + '%';
+      p.style.top = Math.random() * 100 + '%';
+      p.style.width = (4 + Math.random() * 4) + 'px';
+      p.style.height = p.style.width;
+      p.style.setProperty('--dx', (Math.random()-0.5) * 100 + 'px');
+      p.style.setProperty('--dy', -(40 + Math.random() * 80) + 'px');
+      p.style.setProperty('--d', (0.8 + Math.random() * 0.6) + 's');
+      p.style.zIndex = 50;
+      document.body.appendChild(p);
+      setTimeout(() => p.remove(), 1500);
+    }, i * 80);
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+// HELPERS
+// ═══════════════════════════════════════════════════════════
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+function updateHUD() {
+  document.getElementById('hud').style.display = 'flex';
+  document.getElementById('hud-gold').textContent = S.gold;
+  document.getElementById('hp-text').textContent = '∞/∞';
+}
+
+function spawnPixelParticles(parent, colors, x, y) {
+  for (let i = 0; i < 6; i++) {
+    const p = document.createElement('div');
+    p.className = 'ptcl';
+    p.style.background = colors[Math.floor(Math.random() * colors.length)];
+    p.style.left = (x + (Math.random()-0.5)*20) + 'px';
+    p.style.top = y + 'px';
+    p.style.setProperty('--dx', (Math.random()-0.5)*60 + 'px');
+    p.style.setProperty('--dy', -(20 + Math.random()*40) + 'px');
+    p.style.setProperty('--d', (0.6 + Math.random()*0.4) + 's');
+    parent.appendChild(p);
+    setTimeout(() => p.remove(), 1100);
+  }
+}
+
+function showFloater(text) {
+  const el = document.createElement('div');
+  el.style.cssText = `position:absolute;top:50px;left:50%;transform:translateX(-50%);color:#ffd166;font-family:'Press Start 2P',monospace;font-size:11px;letter-spacing:1px;animation:floaterAnim 1.5s ease-out forwards;z-index:100;pointer-events:none;`;
+  el.textContent = text;
+  document.getElementById('game').appendChild(el);
+  setTimeout(() => el.remove(), 1500);
+}
+
+// ═══════════════════════════════════════════════════════════
+// TAP HANDLERS
+// ═══════════════════════════════════════════════════════════
+function handleTap(e) {
+  if (!started) return;
+  if (e && e.target && (e.target.tagName === 'BUTTON' || e.target.tagName === 'INPUT' || e.target.closest('.choice') || e.target.closest('#choices-box') || e.target.closest('#type-box') || e.target.closest('#mg-box') || e.target.closest('#battle-box'))) return;
+  if (S.choices || S.typeData) return;
+  if (document.getElementById('mg-box').style.display === 'flex') return;
+  if (document.getElementById('battle-box').style.display === 'flex') return;
+  if (document.getElementById('finale').style.display === 'block') return;
+  advanceDialog();
+}
+
+document.getElementById('game').addEventListener('click', handleTap);
+window.addEventListener('keydown', e => {
+  if (!started) {
+    if (['Enter',' ','z','Z','x','X'].includes(e.key)) startGame();
+    return;
+  }
+  if (S.typeData) return;
+  if (['Enter',' ','z','Z','x','X','ArrowDown','ArrowRight'].includes(e.key)) {
+    if (S.choices) return;
+    if (document.getElementById('mg-box').style.display === 'flex') return;
+    if (document.getElementById('battle-box').style.display === 'flex') return;
+    advanceDialog();
+    e.preventDefault();
+  }
+});
+
+// ═══════════════════════════════════════════════════════════
+// START
+// ═══════════════════════════════════════════════════════════
+let started = false;
+function startGame() {
+  if (started) return;
+  started = true;
+  document.getElementById('title-screen').style.display = 'none';
+  document.getElementById('hud').style.display = 'flex';
+  updateHUD();
+  loadScene(0);
+}
+</script>
+
+</body>
+</html>
