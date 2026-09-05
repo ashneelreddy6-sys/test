@@ -292,6 +292,147 @@ button,input,select,textarea{font-family:inherit;color:inherit}
 
 </style>
 <style>
+
+/* ============================================================
+   WORKER 2 — WEIGHT FADER
+   Consumes shared tokens + helpers (.engraved .inset .raised .lbl .btn .tnum).
+   Owns only the fd- prefix.
+   ============================================================ */
+.fd,.fd *{box-sizing:border-box}
+.fd{
+  --fd-h:34px;              /* height of the drag band */
+  --fd-thumb-w:16px;        /* MUST equal the native ::slider-thumb width below */
+  --fd-rail-h:5px;
+  position:relative;
+  -webkit-tap-highlight-color:transparent;
+}
+@media (pointer:coarse){ .fd{--fd-h:44px} }
+
+/* ---------- readout: the biggest thing in the component ---------- */
+.fd-read{
+  display:flex;align-items:baseline;justify-content:space-between;gap:12px;
+  padding:1px 0 5px;
+}
+.fd-readval{display:flex;align-items:baseline;gap:7px;min-width:0}
+.fd-num{
+  font-family:var(--sans);
+  font-size:clamp(40px,12vw,56px);font-weight:700;line-height:.92;
+  letter-spacing:-.025em;color:var(--ink);
+  font-variant-numeric:tabular-nums;font-feature-settings:"tnum" 1;
+  text-align:right;white-space:nowrap;
+}
+.fd-unit{flex:none}
+
+/* ---------- row: [−] scale column [+] ---------- */
+.fd-row{display:flex;align-items:flex-start;gap:10px;margin-top:11px}
+.fd-col{flex:1 1 auto;min-width:0}
+
+.fd-step{
+  flex:none;position:relative;
+  min-width:40px;height:36px;padding:0;
+  font-size:18px;font-weight:400;letter-spacing:0;line-height:1;
+  display:grid;place-items:center;
+  touch-action:manipulation;
+  transition:background var(--t-fast) var(--ease),opacity var(--t-fast) var(--ease);
+}
+.fd-step:active:not(:disabled){background:var(--inset);box-shadow:var(--rail-in)}
+.fd-step:disabled{opacity:.38;cursor:default}
+@media (pointer:coarse){
+  .fd-step{min-width:44px;height:44px;font-size:20px}
+  .fd-step::before{content:"";position:absolute;top:50%;left:50%;
+    width:max(100%,44px);height:44px;transform:translate(-50%,-50%)}
+}
+
+/* ---------- track: transparent native input over a hand-drawn rail ---------- */
+.fd-track{position:relative;height:var(--fd-h);touch-action:none}
+
+.fd-input{
+  -webkit-appearance:none;appearance:none;
+  position:absolute;inset:0;width:100%;height:100%;
+  margin:0;padding:0;border:0;background:transparent;
+  font-size:16px;                 /* never let iOS zoom on focus */
+  z-index:2;cursor:grab;outline:none;touch-action:none;
+}
+.fd.fd-drag .fd-input{cursor:grabbing}
+.fd-input::-webkit-slider-runnable-track{height:var(--fd-h,44px);background:transparent;border:0}
+.fd-input::-webkit-slider-thumb{
+  -webkit-appearance:none;appearance:none;
+  width:var(--fd-thumb-w,16px);height:var(--fd-h,44px);
+  background:transparent;border:0;box-shadow:none;
+}
+.fd-input::-moz-range-track{height:var(--fd-h,44px);background:transparent;border:0}
+.fd-input::-moz-range-thumb{
+  width:var(--fd-thumb-w,16px);height:var(--fd-h,44px);
+  background:transparent;border:0;border-radius:0;
+}
+
+.fd-rail{
+  position:absolute;left:0;right:0;top:50%;margin-top:calc(var(--fd-rail-h) / -2);
+  height:var(--fd-rail-h);border-radius:1px;overflow:hidden;z-index:0;
+  background:var(--rail);        /* §5: a fader rail is the deepest well on the panel */
+}
+.fd-fill{
+  display:block;height:100%;width:0;background:var(--signal);
+  transition:width var(--t-fast) var(--ease);
+}
+.fd-thumb{
+  position:absolute;top:50%;left:0;z-index:1;pointer-events:none;
+  width:var(--fd-thumb-w);height:26px;margin-top:-13px;border-radius:1px;
+  transform:translateX(0);
+  transition:transform var(--t-fast) var(--ease),
+             box-shadow var(--t-fast) var(--ease),
+             border-color var(--t-fast) var(--ease);
+}
+@media (pointer:coarse){ .fd-thumb{height:30px;margin-top:-15px} }
+/* dragging: the finger is the motion, so kill the tween and deepen the grab.
+   .fd-init does the same for the very first paint — nothing animates on arrival. */
+.fd.fd-drag .fd-fill,.fd.fd-drag .fd-thumb,
+.fd.fd-init .fd-fill,.fd.fd-init .fd-thumb,.fd.fd-init .fd-lab{transition:none}
+.fd.fd-drag .fd-thumb{box-shadow:var(--sh-2)}
+.fd-input:focus-visible ~ .fd-thumb{outline:2px solid var(--signal);outline-offset:2px}
+
+/* ---------- engraved tick scale ---------- */
+.fd-scale{
+  position:relative;margin-top:5px;
+  touch-action:pan-y;          /* tap to jump, but the page still scrolls */
+  cursor:default;
+}
+@media (pointer:fine){ .fd-scale{cursor:pointer} }
+@media (pointer:coarse){ .fd-scale{padding-bottom:16px;margin-bottom:-16px} } /* 28 + 16 = 44px tap band */
+
+.fd-ticks{position:relative;height:14px}
+.fd-tk{position:absolute;top:0;width:1px;height:5px;
+  background:var(--line);box-shadow:1px 0 0 var(--hilite)}
+.fd-tk.fd-maj{height:9px}
+.fd-tk.fd-cur{height:11px;background:var(--ink)}
+.fd-tk.fd-bd{height:14px;background:var(--grey)}      /* increment-change division */
+.fd-tk.fd-bd.fd-cur{background:var(--ink)}
+
+.fd-labs{position:relative;height:12px;margin-top:2px}
+.fd-lab{
+  position:absolute;top:0;
+  font-family:var(--sans);font-size:10px;line-height:12px;font-weight:400;
+  color:var(--grey);white-space:nowrap;
+  font-variant-numeric:tabular-nums;font-feature-settings:"tnum" 1;
+  transition:color var(--t-fast) var(--ease);
+}
+.fd-lab.fd-on{color:var(--ink)}
+
+/* ---------- zone legends: the scale tells the truth about the hardware ---------- */
+.fd-zones{position:relative;height:14px;margin-top:5px}
+.fd-zn{position:absolute;top:2px;white-space:nowrap}
+.fd-zdiv{position:absolute;top:0;bottom:0;width:1px;
+  background:var(--line);box-shadow:1px 0 0 var(--hilite)}
+
+.fd-sr{position:absolute;width:1px;height:1px;margin:-1px;padding:0;
+  overflow:hidden;clip:rect(0 0 0 0);clip-path:inset(50%);white-space:nowrap;border:0}
+
+@media (prefers-reduced-motion:reduce){
+  .fd-fill,.fd-thumb,.fd-lab,.fd-step{transition:none}
+}
+
+</style>
+<style>
 /* ============================================================================
    02-07 — COMPONENTS + LAYOUT
    fd- fader · tm- timer · mh- masthead · lg- log · dv- device · pn- panel
@@ -391,63 +532,11 @@ button,input,select,textarea{font-family:inherit;color:inherit}
 .pn-reps .v{font-size:19px;font-weight:700;min-width:2.4ch;font-variant-numeric:tabular-nums;text-align:right}
 .pn-reps .v[data-short="1"]{color:var(--warn)}
 
-/* ------------------------------------------------------------------- fader */
-.fd{padding:12px}
-.fd-head{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;margin-bottom:11px}
-.fd-val{display:flex;align-items:baseline;gap:6px}
-.fd-num{font-size:44px;font-weight:700;letter-spacing:-.035em;line-height:.9;font-variant-numeric:tabular-nums}
-.fd-unit{font-size:9.5px;font-weight:700;letter-spacing:.17em;text-transform:uppercase;color:var(--grey)}
-.fd-carry{text-align:right;font-size:9.5px;line-height:1.5;color:var(--grey)}
-.fd-carry b{font-weight:700;color:var(--ink-2)}
-
-.fd-body{display:flex;align-items:center;gap:8px}
-.fd-track{position:relative;flex:1;min-width:0;height:44px}
-.fd-rail{
-  position:absolute;left:0;right:0;top:20px;height:4px;border-radius:1px;
-  background:var(--rail);box-shadow:var(--rail-in);z-index:0;
-}
-.fd-fill{
-  position:absolute;left:0;top:20px;height:4px;border-radius:1px;width:0;
-  background:var(--signal);z-index:1;transition:width var(--t-fast) var(--ease);
-}
-/* when the timer is the live control, the fader stops being the lit thing */
+/* fader owned by 02-fader.css. Signal discipline stays here: when the timer
+   is the live control the fader rail stops being the lit thing. */
 #app[data-live="timer"] .fd-fill{background:var(--ink-2)}
-
-.fd-input{
-  -webkit-appearance:none;appearance:none;
-  position:relative;z-index:3;width:100%;height:44px;margin:0;
-  background:transparent;cursor:pointer;
-  touch-action:none;              /* the thumb owns its drag; the page still scrolls elsewhere */
-}
-.fd-input::-webkit-slider-runnable-track{height:44px;background:transparent;border:0}
-.fd-input::-moz-range-track{height:44px;background:transparent;border:0}
-.fd-input::-webkit-slider-thumb{
-  -webkit-appearance:none;width:22px;height:32px;border-radius:var(--r);
-  background:var(--knob);border:1px solid var(--knob-edge);
-  box-shadow:0 1px 2px rgba(0,0,0,.3);cursor:grab;margin-top:0;
-}
-.fd-input::-moz-range-thumb{
-  width:22px;height:32px;border-radius:var(--r);
-  background:var(--knob);border:1px solid var(--knob-edge);
-  box-shadow:0 1px 2px rgba(0,0,0,.3);cursor:grab;
-}
-.fd-input:active::-webkit-slider-thumb{cursor:grabbing;box-shadow:var(--rail-in)}
-.fd-input:focus-visible::-webkit-slider-thumb{outline:1px solid var(--signal);outline-offset:2px}
-
-/* engraved tick scale — every stop drawn, labels thinned to what fits */
-.fd-scale{position:relative;height:26px;margin-top:1px}
-.fd-tick{position:absolute;top:0;width:1px;height:4px;background:var(--line);transform:translateX(-.5px)}
-.fd-tick[data-major="1"]{height:7px;background:var(--grey)}
-/* the stop where the hardware's own increment changes: a full division mark */
-.fd-tick[data-div="1"]{height:11px;width:1px;background:var(--ink-2)}
-.fd-lab{
-  position:absolute;top:10px;transform:translateX(-50%);
-  font-size:9px;font-weight:700;color:var(--grey);font-variant-numeric:tabular-nums;
-  white-space:nowrap;
-}
-.fd-lab[data-on="1"]{color:var(--ink)}
-.fd-zones{display:flex;justify-content:space-between;gap:8px;padding-top:2px}
-.fd-hit{position:absolute;top:0;height:44px;transform:translateX(-50%);background:transparent;border:0;padding:0;z-index:2;cursor:pointer}
+.pn-carry{padding:0 12px 11px;font-size:9.5px;line-height:1.55;color:var(--grey);display:flex;gap:6px;flex-wrap:wrap;align-items:baseline}
+.pn-carry b{font-weight:700;color:var(--ink-2);font-variant-numeric:tabular-nums}
 
 /* ------------------------------------------------------------------- timer */
 .tm{padding:12px}
@@ -593,8 +682,9 @@ body{padding-bottom:104px}
           <div class="pn-side" data-side hidden></div>
         </div>
         <p class="pn-note" data-note></p>
+        <div class="pn-carry" data-carry></div>
         <hr class="sep">
-        <div id="fd-mount"></div>
+        <div id="fd-mount" class="fd-mount"></div>
         <hr class="sep">
         <div class="pn-row">
           <div>
@@ -954,6 +1044,463 @@ window.CORE={
 
 </script>
 <script>
+
+/* ============================================================
+   WORKER 2 — WEIGHT FADER
+   window.initFader({mount, stops, index, unit, onChange})
+     -> {setIndex(i), setStops(stops, unit), index(), value(), destroy()}
+   The native <input type=range> over the STOP INDEX is the single source of
+   truth. Nothing here hard-codes a stop count or a maximum weight.
+   ============================================================ */
+(function(){
+  'use strict';
+
+  var TH = 16;                    /* px — must equal --fd-thumb-w / the native thumb width */
+  var GUTTER = 8;                 /* px — minimum gap between two tick labels */
+  var MIN_TICK_PITCH = 4;         /* px — below this, minor ticks are thinned too */
+  var UW = {lb:['pound','pounds'], kg:['kilogram','kilograms']};
+
+  var mctx;
+  function meas(t, f){
+    if(mctx === undefined){
+      try{ mctx = document.createElement('canvas').getContext('2d'); }catch(e){ mctx = null; }
+    }
+    if(!mctx) return t.length * 6.2;
+    mctx.font = f;
+    return mctx.measureText(t).width;
+  }
+  function fontOf(el){
+    var s = getComputedStyle(el);
+    return (s.fontWeight||'400') + ' ' + (s.fontSize||'10px') + ' ' + (s.fontFamily||'Helvetica,Arial,sans-serif');
+  }
+  function r2(v){ return Math.round(v*100)/100; }
+  function fmt(v){ return String(r2(v)); }
+  function clamp(v,a,b){ return v<a?a:(v>b?b:v); }
+  function el(tag, cls){ var n=document.createElement(tag); if(cls) n.className=cls; return n; }
+
+  /* defensive: the contract says ascending numbers, but a saved/custom set may not be */
+  function normStops(a){
+    var out=[], seen={};
+    (a||[]).forEach(function(v){
+      if(v === null || v === undefined || v === '') return;   /* Number(null) is 0 */
+      v = Number(v);
+      if(!isFinite(v) || v < 0) return;
+      v = r2(v);
+      if(seen[v]) return;
+      seen[v] = 1; out.push(v);
+    });
+    out.sort(function(x,y){ return x-y; });
+    return out.length ? out : [0];
+  }
+
+  /* run-length the increments: [{a,b,d}] — a/b are stop indices, d the step size */
+  function zonesOf(s){
+    var z=[], i, dd;
+    if(s.length < 2) return z;
+    var st=0, d=r2(s[1]-s[0]);
+    for(i=2;i<s.length;i++){
+      dd = r2(s[i]-s[i-1]);
+      if(dd !== d){ z.push({a:st,b:i-1,d:d}); st=i-1; d=dd; }
+    }
+    z.push({a:st,b:s.length-1,d:d});
+    return z;
+  }
+
+  /* A run one interval long is an odd stop, not a zone — the 552's 50 -> 52.5 top
+     is the real case. Fold it into its neighbour so the legend row stays legible;
+     the raw run still gets its division tick and still appears in the spoken
+     description, so nothing about the hardware is hidden. */
+  function foldZones(z){
+    if(z.length < 2) return z.slice();
+    var out = z.map(function(x){ return {a:x.a,b:x.b,d:x.d}; }), i;
+    for(i=out.length-1;i>=0;i--){
+      if(out.length < 2) break;
+      if(out[i].b - out[i].a >= 2) continue;
+      if(i > 0){ out[i-1].b = out[i].b; out.splice(i,1); }
+      else { out[1].a = out[0].a; out.splice(0,1); }
+    }
+    return out;
+  }
+
+  function unitWord(u, v){
+    var w = UW[u];
+    if(!w) return u;
+    return Math.abs(v) === 1 ? w[0] : w[1];
+  }
+
+  function initFader(opts){
+    opts = opts || {};
+    var mount = opts.mount;
+    if(!mount || !mount.appendChild) throw new Error('initFader: mount element required');
+
+    var stops   = normStops(opts.stops);
+    var unit    = opts.unit || 'lb';
+    var onChange= typeof opts.onChange === 'function' ? opts.onChange : null;
+    var label   = opts.label || 'Dumbbell load';
+    var idx     = clamp(Math.round(Number(opts.index) || 0), 0, stops.length-1);
+
+    var rawZones = zonesOf(stops);      /* every increment change — the truth */
+    var zones    = foldZones(rawZones); /* what the legend row can actually say */
+    var uid      = 'fd' + Math.random().toString(36).slice(2,8);
+
+    /* ---------- build ---------- */
+    mount.textContent = '';
+    var root = el('div','fd fd-init');
+    root.setAttribute('role','group');
+    root.setAttribute('aria-label', label);
+
+    var read  = el('div','fd-read engraved');
+    var rlbl  = el('span','lbl'); rlbl.textContent = 'Load';
+    var rval  = el('span','fd-readval');
+    var num   = el('span','fd-num tnum');
+    var uEl   = el('span','lbl fd-unit');
+    rval.appendChild(num); rval.appendChild(uEl);
+    read.appendChild(rlbl); read.appendChild(rval);
+
+    var row   = el('div','fd-row');
+    var bDown = el('button','btn fd-step');
+    bDown.type='button'; bDown.textContent='−';
+    bDown.setAttribute('aria-label','One stop lighter');
+    var bUp   = el('button','btn fd-step');
+    bUp.type='button'; bUp.textContent='+';
+    bUp.setAttribute('aria-label','One stop heavier');
+
+    var col   = el('div','fd-col');
+    var track = el('div','fd-track');
+
+    var input = document.createElement('input');
+    input.type='range'; input.className='fd-input';
+    input.min='0'; input.step='1';
+    input.max = String(stops.length-1);
+    input.value = String(idx);
+    input.setAttribute('aria-label', label);
+    input.setAttribute('aria-describedby', uid+'-d');
+
+    var rail  = el('div','fd-rail inset');
+    var fill  = el('i','fd-fill');
+    rail.appendChild(fill);
+    var thumb = el('div','fd-thumb raised');
+
+    /* input first in DOM so :focus-visible can reach the thumb as a later sibling */
+    track.appendChild(input); track.appendChild(rail); track.appendChild(thumb);
+
+    var scale = el('div','fd-scale');
+    scale.setAttribute('aria-hidden','true');       /* visual duplicate of the slider */
+    var ticks = el('div','fd-ticks');
+    var labs  = el('div','fd-labs');
+    scale.appendChild(ticks); scale.appendChild(labs);
+
+    var zrow  = el('div','fd-zones');
+    zrow.setAttribute('aria-hidden','true');
+
+    var desc  = el('span','fd-sr'); desc.id = uid+'-d';
+
+    col.appendChild(track); col.appendChild(scale); col.appendChild(zrow);
+    row.appendChild(bDown); row.appendChild(col); row.appendChild(bUp);
+    root.appendChild(read); root.appendChild(row); root.appendChild(desc);
+    mount.appendChild(root);
+
+    /* ---------- geometry ---------- */
+    var trackW = 0, travel = 0, geomKey = '', reported = idx, dead = false;
+
+    function xOf(i){
+      var frac = stops.length > 1 ? i/(stops.length-1) : 0;
+      return TH/2 + frac*travel;
+    }
+    function indexAtX(x){
+      if(stops.length < 2) return 0;
+      var frac = travel > 0 ? (x - TH/2)/travel : 0;
+      return clamp(Math.round(frac*(stops.length-1)), 0, stops.length-1);
+    }
+
+    /* ---------- scale rendering (only when width or stop list changes) ---------- */
+    var minorEvery = 1;
+    var tickBy = {}, labBy = {};      /* stop index -> element, so a drag frame
+                                         touches two nodes, not eighty */
+
+    function buildScale(){
+      var n = stops.length;
+      var pitch = n > 1 ? travel/(n-1) : travel;
+      var labFont = fontOf(labs.appendChild(function(){ var p=el('span','fd-lab'); p.textContent='0'; return p; }()));
+      labs.textContent = '';
+
+      /* widest numeral decides the thinning factor */
+      var i, w, maxW = 0;
+      for(i=0;i<n;i++){ w = meas(fmt(stops[i]), labFont); if(w > maxW) maxW = w; }
+      var minGap = maxW + GUTTER;
+
+      /* forced: first, last, and every named-zone boundary.
+         Division ticks additionally mark every raw increment change. */
+      var forced = {};
+      forced[0] = 1; forced[n-1] = 1;
+      for(i=1;i<zones.length;i++) forced[zones[i].a] = 1;
+      var bd = {};
+      for(i=1;i<rawZones.length;i++) bd[rawZones[i].a] = 1;
+
+      var k = pitch > 0 ? Math.max(1, Math.ceil(minGap/pitch)) : n;
+      var cand = [];
+      for(i=0;i<n;i++){ if(forced[i] || i % k === 0) cand.push(i); }
+
+      /* left-to-right sweep; a forced label may evict a non-forced neighbour */
+      var kept = [], lastX = -1e9;
+      for(i=0;i<cand.length;i++){
+        var ci = cand[i], cx = xOf(ci);
+        if(cx - lastX >= minGap){ kept.push(ci); lastX = cx; continue; }
+        if(forced[ci] && kept.length && !forced[kept[kept.length-1]]){
+          kept.pop();
+          kept.push(ci); lastX = cx;
+        }
+      }
+      if(!kept.length) kept = [0];
+      var keptSet = {}; kept.forEach(function(v){ keptSet[v] = 1; });
+
+      /* below ~4px pitch the minor ticks turn into a grey smear — thin them too */
+      minorEvery = pitch > 0 ? Math.max(1, Math.ceil(MIN_TICK_PITCH/pitch)) : 1;
+
+      /* ticks */
+      tickBy = {}; labBy = {};
+      var fr = document.createDocumentFragment();
+      for(i=0;i<n;i++){
+        if(!(keptSet[i] || bd[i] || i % minorEvery === 0 || i === n-1)) continue;
+        var t = el('b','fd-tk');
+        if(keptSet[i]) t.className += ' fd-maj';
+        if(bd[i]) t.className += ' fd-bd';
+        t.style.left = xOf(i).toFixed(2) + 'px';
+        tickBy[i] = t;
+        fr.appendChild(t);
+      }
+      ticks.textContent = ''; ticks.appendChild(fr);
+      curTick = null; curLab = null;
+
+      /* labels — extremes anchor to the track edge instead of overflowing it */
+      fr = document.createDocumentFragment();
+      for(i=0;i<kept.length;i++){
+        var si = kept[i], L = el('span','fd-lab');
+        L.textContent = fmt(stops[si]);
+        labBy[si] = L;
+        var lw = meas(L.textContent, labFont), lx = xOf(si);
+        if(lx - lw/2 < 0){ L.style.left = '0px'; }
+        else if(lx + lw/2 > trackW){ L.style.left = (trackW - lw).toFixed(2) + 'px'; }
+        else { L.style.left = (lx - lw/2).toFixed(2) + 'px'; }
+        fr.appendChild(L);
+      }
+      labs.appendChild(fr);
+
+      buildZones();
+    }
+
+    function buildZones(){
+      zrow.textContent = '';
+      if(!rawZones.length){ desc.textContent = 'Single stop, ' + fmt(stops[0]) + ' ' + unitWord(unit, stops[0]) + '.'; return; }
+
+      var probe = zrow.appendChild(function(){ var p=el('span','lbl fd-zn'); p.textContent='0'; return p; }());
+      var zs = getComputedStyle(probe);
+      var zFont = (zs.fontWeight||'700') + ' ' + (zs.fontSize||'9.5px') + ' ' + (zs.fontFamily||'Helvetica,Arial,sans-serif');
+      var up = (zs.textTransform === 'uppercase');
+      var ls = parseFloat(zs.letterSpacing) || 0;
+      zrow.textContent = '';
+
+      /* .lbl is caps + tracked, and canvas measures neither — apply both by hand */
+      function zw(txt){ var t = up ? txt.toUpperCase() : txt; return meas(t, zFont) + ls*t.length; }
+
+      var i, cells = zones.map(function(z){
+        var full  = fmt(z.d) + ' ' + unit + ' steps';
+        var short = fmt(z.d) + ' ' + unit;
+        var span  = xOf(z.b) - xOf(z.a);
+        return {z:z, full:full, short:short, span:span};
+      });
+
+      /* per-zone legends only if every one of them fits its own span, and all of
+         them use the same form — a panel does not mix legend styles mid-scale */
+      var form = cells.every(function(c){ return zw(c.full) + 6 <= c.span; }) ? 'full'
+               : cells.every(function(c){ return zw(c.short) + 6 <= c.span; }) ? 'short' : null;
+      cells.forEach(function(c){ c.text = form ? c[form] : null; });
+      var fits = !!form;
+
+      var fr = document.createDocumentFragment();
+      if(fits && zones.length > 1){
+        for(i=1;i<zones.length;i++){
+          var d = el('i','fd-zdiv');
+          d.style.left = xOf(zones[i].a).toFixed(2) + 'px';
+          fr.appendChild(d);
+        }
+        cells.forEach(function(c){
+          var s = el('span','lbl fd-zn');
+          s.textContent = c.text;
+          var w = zw(c.text), cx = (xOf(c.z.a) + xOf(c.z.b))/2;
+          s.style.left = clamp(cx - w/2, 0, Math.max(0, trackW - w)).toFixed(2) + 'px';
+          fr.appendChild(s);
+        });
+      }else{
+        /* one legend: the distinct increments, in order */
+        var seen = {}, ds = [];
+        zones.forEach(function(z){ if(!seen[z.d]){ seen[z.d]=1; ds.push(fmt(z.d)); } });
+        var s2 = el('span','lbl fd-zn');
+        s2.textContent = 'Steps ' + ds.join(' / ') + ' ' + unit;
+        var w2 = zw(s2.textContent);
+        s2.style.left = clamp((trackW - w2)/2, 0, Math.max(0, trackW - w2)).toFixed(2) + 'px';
+        fr.appendChild(s2);
+        if(zones.length > 1){
+          for(i=1;i<zones.length;i++){
+            var d2 = el('i','fd-zdiv');
+            d2.style.left = xOf(zones[i].a).toFixed(2) + 'px';
+            fr.appendChild(d2);
+          }
+        }
+      }
+      zrow.appendChild(fr);
+
+      /* spoken description — the scale tells AT the same truth it tells the eye */
+      var uw = unitWord(unit, 2);
+      var head = 'Stops from ' + fmt(stops[0]) + ' to ' + fmt(stops[stops.length-1]) + ' ' + uw + '. ';
+      if(rawZones.length === 1){
+        desc.textContent = head + fmt(rawZones[0].d) + ' ' + uw + ' apart.';
+      }else{
+        desc.textContent = head + rawZones.map(function(z){
+          return fmt(stops[z.a]) + ' to ' + fmt(stops[z.b]) + ', ' + fmt(z.d) + ' apart';
+        }).join('; ') + '.';
+      }
+    }
+
+    /* ---------- paint ---------- */
+    var curTick = null, curLab = null;
+    function paint(){
+      var v = stops[idx];
+      num.textContent = fmt(v);
+      uEl.textContent = unit;
+      input.setAttribute('aria-valuetext', fmt(v) + ' ' + unitWord(unit, v));
+
+      var cx = xOf(idx);
+      thumb.style.transform = 'translateX(' + (cx - TH/2).toFixed(2) + 'px)';
+      fill.style.width = cx.toFixed(2) + 'px';
+
+      bDown.disabled = idx <= 0;
+      bUp.disabled   = idx >= stops.length-1;
+
+      if(curTick && curTick !== tickBy[idx]) curTick.classList.remove('fd-cur');
+      if(curLab  && curLab  !== labBy[idx])  curLab.classList.remove('fd-on');
+      curTick = tickBy[idx] || null; if(curTick) curTick.classList.add('fd-cur');
+      curLab  = labBy[idx]  || null; if(curLab)  curLab.classList.add('fd-on');
+    }
+
+    /* ---------- one visual update per frame (§6) ---------- */
+    var raf = 0, needGeom = false, needEmit = false;
+    function request(geom, emit){
+      if(geom) needGeom = true;
+      if(emit) needEmit = true;
+      if(raf) return;
+      raf = requestAnimationFrame(function(){
+        raf = 0;
+        if(dead) return;
+        var g = needGeom, e = needEmit;
+        needGeom = false; needEmit = false;
+        render(g, e);
+      });
+    }
+    function render(geom, emit){
+      var w = track.clientWidth;
+      if(geom || w !== trackW){
+        trackW = w;
+        travel = Math.max(0, trackW - TH);
+        var key = trackW + '|' + stops.length + '|' + stops.join(',') + '|' + unit;
+        if(key !== geomKey){ geomKey = key; buildScale(); }
+      }
+      paint();
+      if(emit && onChange && idx !== reported){ reported = idx; onChange(idx, stops[idx]); }
+    }
+
+    /* ---------- input ---------- */
+    function fromInput(){
+      var v = clamp(Math.round(+input.value || 0), 0, stops.length-1);
+      if(v !== idx){ idx = v; request(false, true); }
+      else request(false, false);
+    }
+    function setIdx(v, emit){
+      v = clamp(Math.round(v), 0, stops.length-1);
+      if(v === idx && input.value === String(v)) return;
+      idx = v; input.value = String(v);
+      request(false, !!emit);
+    }
+
+    function onIn(){ fromInput(); }
+    function onStep(e){
+      var d = e.currentTarget === bUp ? 1 : -1;
+      setIdx(idx + d, true);
+    }
+    function onScaleClick(e){
+      var r = scale.getBoundingClientRect();
+      setIdx(indexAtX(e.clientX - r.left), true);
+      input.focus({preventScroll:true});
+    }
+    function onDown(){ root.classList.add('fd-drag'); }
+    function onUp(){ root.classList.remove('fd-drag'); }
+
+    input.addEventListener('input', onIn);
+    input.addEventListener('change', onIn);
+    bDown.addEventListener('click', onStep);
+    bUp.addEventListener('click', onStep);
+    scale.addEventListener('click', onScaleClick);
+    track.addEventListener('pointerdown', onDown);
+    window.addEventListener('pointerup', onUp);
+    window.addEventListener('pointercancel', onUp);
+
+    var ro = null, onResize = null;
+    if(window.ResizeObserver){
+      ro = new ResizeObserver(function(){ request(true, false); });
+      ro.observe(track);
+    }else{
+      onResize = function(){ request(true, false); };
+      window.addEventListener('resize', onResize);
+    }
+
+    /* no entrance animation: paint, let that state commit, then arm the tweens */
+    render(true, false);
+    void root.offsetWidth;
+    root.classList.remove('fd-init');
+
+    /* ---------- public API ---------- */
+    return {
+      /* programmatic — never echoes onChange, and lands before the caller's next line */
+      setIndex: function(i){
+        i = clamp(Math.round(Number(i) || 0), 0, stops.length-1);
+        idx = i; reported = i; input.value = String(i);
+        render(false, false);
+      },
+      setStops: function(list, u){
+        var prev = stops[idx];
+        stops = normStops(list);
+        if(u) unit = u;
+        rawZones = zonesOf(stops);
+        zones    = foldZones(rawZones);
+        input.max = String(stops.length-1);
+        /* keep the weight the user set, not the raw index (trap 7) */
+        var best = 0, i;
+        for(i=1;i<stops.length;i++){
+          if(Math.abs(stops[i]-prev) < Math.abs(stops[best]-prev)) best = i;
+        }
+        idx = best; reported = best; input.value = String(best);
+        geomKey = '';
+        render(true, false);
+      },
+      index: function(){ return idx; },
+      value: function(){ return stops[idx]; },
+      destroy: function(){
+        dead = true;
+        if(raf) cancelAnimationFrame(raf);
+        if(ro) ro.disconnect();
+        if(onResize) window.removeEventListener('resize', onResize);
+        window.removeEventListener('pointerup', onUp);
+        window.removeEventListener('pointercancel', onUp);
+        mount.textContent = '';
+      }
+    };
+  }
+
+  window.initFader = initFader;
+})();
+
+</script>
+<script>
 /* ============================================================================
    COMPONENTS + SHELL — fader, timer, masthead, log, settings, wiring.
    ========================================================================= */
@@ -976,135 +1523,6 @@ function pinScroll(node,mutate){
   mutate();
   const drift=node.getBoundingClientRect().top-before;
   if(Math.abs(drift)>0.5) window.scrollBy(0,drift);
-}
-
-/* ============================ FADER ============================
-   The 15 click-stops are indexed, not valued: the hardware's increment changes
-   at 25 lb (2.5 below, 5 above), so a value-based range would put uneven
-   detents under the thumb and could land between real stops. */
-function initFader(o){
-  const mount=o.mount;
-  mount.innerHTML=
-    '<div class="fd">'+
-      '<div class="fd-head">'+
-        '<div class="fd-val"><span class="fd-num" data-num>25</span><span class="fd-unit" data-unit>lb</span></div>'+
-        '<div class="fd-carry" data-carry></div>'+
-      '</div>'+
-      '<div class="fd-body">'+
-        '<button class="btn" data-dn aria-label="One stop lighter">&minus;</button>'+
-        '<div class="fd-track">'+
-          '<div class="fd-rail"></div><div class="fd-fill" data-fill></div>'+
-          '<input class="fd-input" type="range" min="0" max="1" step="1" value="0" data-in>'+
-          '<div data-hits></div>'+
-        '</div>'+
-        '<button class="btn" data-up aria-label="One stop heavier">+</button>'+
-      '</div>'+
-      '<div class="fd-scale" data-scale></div>'+
-      '<div class="fd-zones" data-zones></div>'+
-    '</div>';
-
-  const input=mount.querySelector('[data-in]'), fill=mount.querySelector('[data-fill]'),
-        numEl=mount.querySelector('[data-num]'), unitEl=mount.querySelector('[data-unit]'),
-        scale=mount.querySelector('[data-scale]'), zones=mount.querySelector('[data-zones]'),
-        hits=mount.querySelector('[data-hits]'), carry=mount.querySelector('[data-carry]');
-  let stops=o.stops.slice(), unit=o.unit||'lb', idx=Math.max(0,Math.min(stops.length-1,o.index|0));
-
-  const TW=22;                                  /* thumb width; centre travels TW/2 .. W-TW/2 */
-  const pos=i=>{ const p=stops.length>1?i/(stops.length-1):0;
-                 return 'calc('+(p*100)+'% + '+(TW/2-p*TW).toFixed(2)+'px)'; };
-  /* the index where the hardware's own increment changes */
-  function divisionIdx(){
-    if(stops.length<3) return -1;
-    const d0=+(stops[1]-stops[0]).toFixed(3);
-    for(let i=2;i<stops.length;i++) if(+(stops[i]-stops[i-1]).toFixed(3)!==d0) return i-1;
-    return -1;
-  }
-
-  function buildScale(){
-    scale.innerHTML=''; hits.innerHTML=''; zones.innerHTML='';
-    const div=divisionIdx();
-    stops.forEach((v,i)=>{
-      const t=el('div','fd-tick'); t.style.left=pos(i);
-      if(v%5===0) t.dataset.major='1';
-      if(i===div) t.dataset.div='1';
-      scale.appendChild(t);
-      const l=el('div','fd-lab',num(v)); l.style.left=pos(i); l.dataset.i=i;
-      scale.appendChild(l);
-      const h=el('button','fd-hit'); h.type='button'; h.style.left=pos(i);
-      h.style.width=Math.max(28,Math.floor(280/stops.length))+'px';
-      h.setAttribute('aria-label',v+' '+unit);
-      h.addEventListener('click',()=>set(i,true));
-      hits.appendChild(h);
-    });
-    if(div>=0){
-      const a=+(stops[1]-stops[0]).toFixed(3), b=+(stops[div+1]-stops[div]).toFixed(3);
-      const z1=el('span','lbl',a+' '+unit+' steps'), z2=el('span','lbl',b+' '+unit+' steps');
-      z1.style.flex=div; z2.style.flex=(stops.length-1-div);
-      z2.style.textAlign='right';
-      zones.appendChild(z1); zones.appendChild(z2);
-    }
-    thinLabels();
-  }
-  /* thin the scale until nothing collides — adaptive to any stop list or width */
-  function thinLabels(){
-    const labs=[].slice.call(scale.querySelectorAll('.fd-lab'));
-    labs.forEach(l=>{l.hidden=false;});
-    let lastRight=-1e9;
-    labs.forEach(l=>{
-      const r=l.getBoundingClientRect();
-      if(r.width===0) return;
-      if(r.left < lastRight+5){ l.hidden=true; return; }
-      lastRight=r.right;
-    });
-    /* the selected stop's own label always wins its slot */
-    const sel=scale.querySelector('.fd-lab[data-i="'+idx+'"]');
-    if(sel&&sel.hidden){
-      sel.hidden=false;
-      const sr=sel.getBoundingClientRect();
-      labs.forEach(l=>{ if(l===sel||l.hidden) return;
-        const r=l.getBoundingClientRect();
-        if(r.right>sr.left-5&&r.left<sr.right+5) l.hidden=true; });
-    }
-    labs.forEach(l=>{ l.dataset.on = (+l.dataset.i===idx)?'1':'0'; });
-  }
-
-  const paint=coalesce(function(){
-    const v=stops[idx];
-    numEl.textContent=num(v);
-    unitEl.textContent=unit;
-    fill.style.width=pos(idx);
-    input.setAttribute('aria-valuetext',v+' '+(unit==='kg'?'kilograms':'pounds'));
-    mount.querySelector('[data-dn]').disabled=(idx===0);
-    mount.querySelector('[data-up]').disabled=(idx===stops.length-1);
-    thinLabels();
-  });
-
-  function set(i,fire){
-    i=Math.max(0,Math.min(stops.length-1,i));
-    if(i===idx&&input.value==String(i)){ paint(); return; }
-    idx=i; input.value=String(i); paint();
-    if(fire&&o.onChange) o.onChange(idx,stops[idx]);
-  }
-  input.addEventListener('input',()=>set(+input.value,true));
-  mount.querySelector('[data-dn]').addEventListener('click',()=>set(idx-1,true));
-  mount.querySelector('[data-up]').addEventListener('click',()=>set(idx+1,true));
-  window.addEventListener('resize',coalesce(thinLabels));
-
-  function setStops(s,u){
-    stops=s.slice(); unit=u||unit;
-    input.max=String(stops.length-1);
-    idx=Math.max(0,Math.min(stops.length-1,idx));
-    input.value=String(idx);
-    buildScale(); paint();
-  }
-  input.max=String(stops.length-1); input.value=String(idx);
-  input.setAttribute('aria-label','Dumbbell weight');
-  buildScale(); paint();
-
-  return {
-    setIndex:i=>set(i,false), setStops, index:()=>idx, value:()=>stops[idx],
-    carry:t=>{ carry.innerHTML=t||''; }
-  };
 }
 
 /* ============================ TIMER ============================ */
@@ -1354,7 +1772,7 @@ function renderHistory(mount,rows){
   }
 }
 
-window.UI={initFader,initTimer,renderMast,renderToday,renderHistory,coalesce,pinScroll,el,$,clock,num};
+window.UI={initTimer,renderMast,renderToday,renderHistory,coalesce,pinScroll,el,$,clock,num};
 })();
 
 </script>
@@ -1464,12 +1882,16 @@ function render(){
     $('[data-setof]').textContent='Set '+(sl.s+1)+' of '+ex.sets;
     const nt=$('[data-note]'); nt.textContent=ex.note||''; nt.hidden=!ex.note;
 
-    if(fader){
-      fader.setIndex(C.snapIdx(S().weights[ex.id]));
-      const v=C.verdict(ex);
-      fader.carry( v.weight==null
-        ? 'No history.<br>Set it to what you can hold.'
-        : 'Last '+num(v.weight)+' '+v.unit+' × '+v.reps.join(' ')+'<br><b>'+(v.up?'clean — moved up':'held')+'</b>');
+    if(fader) fader.setIndex(C.snapIdx(S().weights[ex.id]));
+    /* last-session provenance belongs to the console, not to the control */
+    const v=C.verdict(ex), cy=$('[data-carry]');
+    cy.innerHTML='';
+    if(v.weight==null){ cy.appendChild(el('span',null,'No history for this lift — set the dial to what you can hold.')); }
+    else{
+      cy.appendChild(el('span',null,'Last'));
+      cy.appendChild(el('b',null,num(v.weight)+' '+v.unit));
+      cy.appendChild(el('span',null,'× '+v.reps.join(' ')));
+      cy.appendChild(el('span','lg-tag'+(v.up?' ok':''), v.up?'clean — moved up':'held'));
     }
     const r=reps();
     $('[data-rval]').textContent=r;
@@ -1620,7 +2042,7 @@ C.loadLocal();
 C.openSession();
 themeInit();
 
-fader=U.initFader({mount:$('#fd-mount'), stops:C.stops(), unit:C.unit(), index:0,
+fader=window.initFader({mount:$('#fd-mount'), stops:C.stops(), unit:C.unit(), index:0,
   onChange:(i,v)=>{ const ex=curEx(); if(!ex) return; S().weights[ex.id]=v; C.persist();
     U.renderToday($('#today'),C.todayModel()); renderBar(C.finished()||C.cur().done, !!(timer&&timer.running())); }});
 timer=U.initTimer({mount:$('#tm-mount'),
