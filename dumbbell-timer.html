@@ -660,8 +660,8 @@ body{padding-bottom:104px}
         </div>
 
         <div class="st-sw"><button class="pw" type="button" data-sw="sound" aria-pressed="true" aria-label="Sound"></button><span>Sound</span></div>
-        <div class="st-sw"><button class="pw" type="button" data-sw="vibe" aria-pressed="true" aria-label="Vibrate"></button><span>Vibrate &mdash; Android only; iOS has no vibration API</span></div>
-        <div class="st-sw"><button class="pw" type="button" data-sw="wake" aria-pressed="true" aria-label="Keep screen on"></button><span>Keep screen on</span></div>
+        <div class="st-sw"><button class="pw" type="button" data-sw="vibe" aria-pressed="true" aria-label="Vibrate"></button><span data-vibe-note>Vibrate</span></div>
+        <div class="st-sw"><button class="pw" type="button" data-sw="wake" aria-pressed="true" aria-label="Keep screen on"></button><span data-wake-note>Keep screen on</span></div>
 
         <hr class="sep" style="margin:13px 0">
 
@@ -1134,7 +1134,10 @@ function initTimer(o){
         preWrap=mount.querySelector('[data-pre]');
 
   const T={on:false,dl:0,dur:0,paused:false,left:0,lastBeep:-1};
-  let preset=90, raf=null, AC=null, flags={sound:true,vibe:true,wake:true}, wl=null;
+  let preset=90, raf=null, AC=null, flags={sound:true,vibe:true,wake:true}, wl=null, backstop=null;
+  /* what this browser/frame actually supports, learned rather than assumed */
+  const caps={vibe:typeof navigator.vibrate==='function',
+              wake:('wakeLock' in navigator)?'unknown':'absent'};
 
   [60,75,90,120].forEach(s=>{
     const b=el('button','btn',s+'s'); b.type='button'; b.dataset.pre=s;
@@ -1148,6 +1151,9 @@ function initTimer(o){
   function unlock(){ try{
       if(!AC){ const K=window.AudioContext||window.webkitAudioContext; if(!K) return; AC=new K(); }
       if(AC.state==='suspended') AC.resume();
+      if(!AC._primed){ AC._primed=1;
+        const b=AC.createBufferSource(); b.buffer=AC.createBuffer(1,1,22050);
+        b.connect(AC.destination); b.start(0); }
     }catch(e){} }
   function beep(f,d,g){ if(!flags.sound) return; unlock(); if(!AC) return;
     try{ const o1=AC.createOscillator(), g1=AC.createGain();
@@ -1159,13 +1165,21 @@ function initTimer(o){
       o1.start(); o1.stop(AC.currentTime+d+.03);
     }catch(e){} }
   /* iOS Safari has no navigator.vibrate at all — a silent no-op, never a throw */
-  function buzz(p){ if(!flags.vibe||!navigator.vibrate) return; try{navigator.vibrate(p);}catch(e){} }
-  async function wake(on){ try{
-      if(on&&flags.wake&&'wakeLock'in navigator&&!wl){
+  function buzz(p){ if(!flags.vibe||!caps.vibe) return; try{navigator.vibrate(p);}catch(e){} }
+  async function wake(on){
+    if(caps.wake==='absent'||caps.wake==='refused'){ return; }
+    try{
+      if(on&&flags.wake&&!wl&&document.visibilityState==='visible'){
         wl=await navigator.wakeLock.request('screen');
         wl.addEventListener('release',()=>{wl=null;});
+        if(caps.wake!=='ok'){ caps.wake='ok'; if(o.onCaps) o.onCaps(caps); }
       }else if(!on&&wl){ await wl.release(); wl=null; }
-    }catch(e){} }
+    }catch(e){
+      /* an artifact runs in a cross-origin iframe; without allow="screen-wake-lock"
+         the request is refused outright. Say so rather than showing a dead switch. */
+      caps.wake = (e&&e.name==='NotAllowedError')?'refused':'absent';
+      wl=null; if(o.onCaps) o.onCaps(caps);
+    } }
 
   const left=()=>T.paused?T.left:Math.max(0,(T.dl-Date.now())/1000);
   const tick=coalesce(function(){
@@ -1181,15 +1195,23 @@ function initTimer(o){
       if(whole>0){ beep(760,.09,.16); buzz(24); }
       else{ beep(1180,.30,.22); setTimeout(()=>beep(1180,.30,.22),190); buzz([70,60,70]); }
     }
-    if(L<=0&&!T.paused){ stop(); if(o.onComplete) o.onComplete(); }
+    if(L<=0&&!T.paused) finish((Date.now()-T.dl)/1000);
   });
+  function finish(late){
+    if(!T.on) return;
+    if(late>3){ T.lastBeep=0; }   /* returned to a long-backgrounded tab: no stale cue */
+    stop(); if(o.onComplete) o.onComplete(); }
   function loop(){ cancelAnimationFrame(raf);
-    raf=requestAnimationFrame(function f(){ tick(); if(T.on&&!T.paused) raf=requestAnimationFrame(f); }); }
+    raf=requestAnimationFrame(function f(){ tick(); if(T.on&&!T.paused) raf=requestAnimationFrame(f); });
+    clearTimeout(backstop);
+    if(T.on&&!T.paused) backstop=setTimeout(tickNow,Math.max(0,T.dl-Date.now())+60); }
+  function tickNow(){ if(!T.on||T.paused) return;
+    if(left()<=0){ const late=(Date.now()-T.dl)/1000; finish(late); } else loop(); }
 
   function start(sec){ if(sec<=0){ stop(); return; }
     T.on=true;T.paused=false;T.dur=sec;T.dl=Date.now()+sec*1000;T.lastBeep=-1;
     readBtn.setAttribute('aria-pressed','false'); wake(true); tick(); loop(); }
-  function stop(){ T.on=false;T.paused=false;cancelAnimationFrame(raf);raf=null;wake(false);
+  function stop(){ T.on=false;T.paused=false;cancelAnimationFrame(raf);raf=null;clearTimeout(backstop);wake(false);
     band.style.width='0%'; stateEl.textContent='Ready'; stateEl.dataset.s='idle';
     clockEl.textContent=clock(preset); }
   function toggle(){ if(!T.on) return;
@@ -1209,7 +1231,7 @@ function initTimer(o){
     if(document.visibilityState==='visible'){ if(T.on){ wake(true); tick(); loop(); } } });
 
   setPreset(90); stop();
-  return {start,stop,add,restart,toggle,running:()=>T.on,left,setPreset,preset:()=>preset,unlock,
+  return {start,stop,add,restart,toggle,running:()=>T.on,left,setPreset,preset:()=>preset,unlock,caps:()=>caps,
     setFlags:f=>{flags=Object.assign(flags,f); if(!flags.wake) wake(false); else if(T.on) wake(true);},
     next:t=>{ mount.querySelector('[data-next]').innerHTML=t||''; }};
 }
@@ -1365,6 +1387,20 @@ function themeInit(){
     label();
   });
   label();
+}
+
+/* A control that cannot do its job is disabled and says why — never left
+   looking operable. §9: the interface never lets a guess wear a fact's costume. */
+function paintCaps(c){
+  const vb=$('[data-sw="vibe"]'), wk=$('[data-sw="wake"]');
+  vb.disabled=!c.vibe;
+  $('[data-vibe-note]').textContent = c.vibe ? 'Vibrate' : 'Vibrate — unavailable on iOS';
+  const refused = c.wake==='refused'||c.wake==='absent';
+  wk.disabled=refused;
+  $('[data-wake-note]').textContent = c.wake==='refused'
+    ? 'Keep screen on — refused in this frame; the count is unaffected'
+    : c.wake==='absent' ? 'Keep screen on — unsupported by this browser'
+    : 'Keep screen on';
 }
 
 /* ------------------------------------------------------------------ actions */
@@ -1588,10 +1624,12 @@ fader=U.initFader({mount:$('#fd-mount'), stops:C.stops(), unit:C.unit(), index:0
   onChange:(i,v)=>{ const ex=curEx(); if(!ex) return; S().weights[ex.id]=v; C.persist();
     U.renderToday($('#today'),C.todayModel()); renderBar(C.finished()||C.cur().done, !!(timer&&timer.running())); }});
 timer=U.initTimer({mount:$('#tm-mount'),
+  onCaps:paintCaps,
   onComplete:()=>render(),
   onTick:L=>{ const s=document.querySelector('[data-sub]'); if(s) s.textContent=clock(L); }});
 timer.setPreset(Math.max(10,+S().settings.rest||90));
 timer.setFlags({sound:S().settings.sound,vibe:S().settings.vibe,wake:S().settings.wake});
+paintCaps(timer.caps());
 
 wire();
 render();
