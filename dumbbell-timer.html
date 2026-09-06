@@ -433,6 +433,339 @@ button,input,select,textarea{font-family:inherit;color:inherit}
 
 </style>
 <style>
+
+/* ============================================================================
+   11 — CARDIO / TREADMILL
+   Consumes worker 1's tokens and the shared helpers
+   (.engraved .inset .raised .lbl .plate .btn .pw .tnum .sep .pn .pn-hd .pn-bd).
+   Defines no token and no colour literal. Owns only the cd- prefix.
+
+   SIGNAL DISCIPLINE — this panel spends NO --signal. The app's one accent is
+   already committed to the live control in the action bar / timer; a second
+   orange here would break §2 rule 1. Provenance carries the colour instead:
+   --warn = estimated, --bad = unvalidated or missing input, --grey = raw input.
+
+   TYPE — the app's 13px body is small at the ~3 ft the iPad sits at, so figures
+   run 18-54px and copy runs 12-13px. .lbl stays at its shared 9.5px: a
+   silkscreened legend is a recognition target, not a reading target.
+   ========================================================================= */
+
+.cd,.cd *{box-sizing:border-box}
+.cd{--cd-step:38px}
+@media (pointer:coarse){ .cd{--cd-step:44px} }
+
+.cd-sp{flex:1}
+
+/* ---------------------------------------------------------------- readout */
+.cd-read{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;padding:1px 0 0}
+.cd-val{min-width:0}
+.cd-numwrap{display:flex;align-items:baseline;gap:7px;margin-top:3px;min-width:0}
+.cd-num{
+  font-family:var(--sans);
+  font-size:clamp(38px,11vw,54px);font-weight:700;line-height:.9;letter-spacing:-.03em;
+  color:var(--ink);white-space:nowrap;
+  font-variant-numeric:tabular-nums;font-feature-settings:"tnum" 1;
+}
+/* a bracket is twice as wide as a single figure — step down rather than clip */
+.cd-num[data-w="1"]{font-size:clamp(27px,8vw,40px);letter-spacing:-.025em}
+.cd-num[data-void="1"]{color:var(--grey);font-weight:400}
+.cd-unit{font-size:13px;color:var(--grey);flex:none}
+
+/* §9 — the flag sits beside the value and is always visible, never on hover */
+.cd-flag{
+  font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;
+  white-space:nowrap;padding-bottom:5px;
+}
+.cd-flag[data-t="est"]{color:var(--warn)}
+.cd-flag[data-t="unval"]{color:var(--bad)}
+.cd-flag[data-t="none"]{color:var(--grey)}
+
+.cd-sub{font-size:12.5px;line-height:1.45;color:var(--ink-2);margin-top:6px;max-width:56ch}
+
+/* ------------------------------------------------------- gauge cluster (§5) */
+.cd-gauges{display:flex;flex-wrap:wrap;row-gap:11px;padding:13px 0 3px}
+.cd-g{
+  display:flex;flex-direction:column;gap:4px;padding:1px 13px;min-width:0;flex:1 1 0;
+  border-left:1px solid var(--line);box-shadow:inset 1px 0 0 var(--hilite);
+}
+.cd-g:first-child{border-left:0;box-shadow:none;padding-left:0}
+.cd-g > b{
+  font-size:18px;font-weight:700;letter-spacing:-.02em;color:var(--ink);
+  font-variant-numeric:tabular-nums;font-feature-settings:"tnum" 1;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.cd-cap{font-size:11px;line-height:1.3;color:var(--grey);display:flex;gap:5px;align-items:baseline;flex-wrap:wrap;min-height:13px}
+.cd-fl{font-size:9px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;white-space:nowrap}
+.cd-fl[data-t="est"]{color:var(--warn)}
+.cd-fl[data-t="unval"]{color:var(--bad)}
+.cd-fl[data-t="raw"]{color:var(--grey)}
+/* no orphaned vertical groove at the start of a wrapped row */
+@media (max-width:519px){
+  .cd-g{flex:1 1 44%;padding-left:12px}
+  .cd-g:nth-child(odd){border-left:0;box-shadow:none;padding-left:0}
+}
+
+/* ------------------------------------------------------------------- copy */
+.cd-note{font-size:12.5px;line-height:1.5;color:var(--ink-2);margin-top:12px;max-width:62ch}
+.cd-method{font-size:12px;line-height:1.5;color:var(--grey);margin-top:9px;max-width:66ch}
+.cd-caveats{display:flex;flex-direction:column;gap:6px;margin-top:10px}
+.cd-caveats:empty{display:none}
+.cd-cv{font-size:12px;line-height:1.45;color:var(--grey);display:flex;gap:8px;max-width:64ch}
+/* a status lamp, not a bullet — dim until it matters */
+.cd-cv::before{content:"";flex:none;width:5px;height:5px;margin-top:6px;border-radius:1px;background:var(--grey)}
+.cd-cv[data-t="stop"]{color:var(--ink-2)}
+.cd-cv[data-t="stop"]::before{background:var(--bad)}
+
+/* -------------------------------------------------- speed-model level strip
+   The validated ranges are the point of this panel, so they are drawn, not
+   only stated. The gap between the two equations is hatched: a region with no
+   data in it, which is exactly what it is.                                  */
+.cd-model{padding:2px 0 0}
+.cd-strip{position:relative;height:9px;margin-top:7px;overflow:hidden}
+.cd-band{position:absolute;top:0;bottom:0;box-shadow:inset 1px 0 0 var(--panel)}
+.cd-band:first-child{box-shadow:none}
+.cd-band[data-z="dead"]{background:var(--line-soft)}
+.cd-band[data-z="walk"],.cd-band[data-z="run"]{background:var(--line)}
+.cd-band[data-z="gap"]{
+  background-image:repeating-linear-gradient(135deg,var(--line) 0 2px,transparent 2px 5px);
+}
+.cd-band[data-on="1"]{background-color:var(--grey)}
+.cd-band[data-z="gap"][data-on="1"]{
+  background-color:transparent;
+  background-image:repeating-linear-gradient(135deg,var(--ink-2) 0 2px,transparent 2px 5px);
+}
+.cd-ptr{
+  position:absolute;top:-4px;left:0;width:9px;margin-left:-4.5px;height:17px;
+  border-radius:1px;z-index:2;pointer-events:none;
+  transition:left var(--t-fast) var(--ease);
+}
+.cd.cd-init .cd-ptr{transition:none}          /* nothing animates on arrival */
+
+.cd-ticks{position:relative;height:6px;margin-top:5px}
+.cd-tk{position:absolute;top:0;width:1px;height:4px;background:var(--line);box-shadow:1px 0 0 var(--hilite)}
+.cd-tk[data-m="1"]{height:6px;background:var(--grey)}
+.cd-labs{position:relative;height:15px;margin-top:1px}
+.cd-lab{
+  position:absolute;top:0;font-size:11px;line-height:15px;color:var(--grey);white-space:nowrap;
+  font-variant-numeric:tabular-nums;font-feature-settings:"tnum" 1;transform:translateX(-50%);
+}
+.cd-lab[data-e="l"]{transform:none}
+.cd-lab[data-e="r"]{transform:translateX(-100%)}
+.cd-zones{position:relative;height:14px;margin-top:3px}
+.cd-zn{position:absolute;top:0;white-space:nowrap;transform:translateX(-50%)}
+.cd-zn[data-on="1"]{color:var(--ink)}
+.cd-zdiv{position:absolute;top:-3px;bottom:2px;width:1px;background:var(--line);box-shadow:1px 0 0 var(--hilite)}
+
+/* --------------------------------------------------------------- controls
+   Three inputs, which is the whole set a person will touch mid-session. The
+   readout IS the field: 26px, so it is legible at arm's length and is well
+   clear of the 16px below which iOS zooms the page on focus.                */
+.cd-row{
+  display:flex;align-items:center;gap:9px;padding:10px 0;flex-wrap:wrap;
+  border-bottom:1px solid var(--line);box-shadow:0 1px 0 var(--hilite);
+}
+.cd-row:last-child{border-bottom:0;box-shadow:none}
+.cd-rl{flex:1 1 34%;min-width:0;display:flex;flex-direction:column;gap:2px}
+.cd-hint{font-size:11.5px;line-height:1.35;color:var(--grey)}
+.cd-field{display:flex;align-items:center;gap:6px;flex:none}
+.cd-in{
+  font-family:var(--sans);
+  font-size:26px;font-weight:700;line-height:1.1;letter-spacing:-.02em;
+  font-variant-numeric:tabular-nums;font-feature-settings:"tnum" 1;text-align:right;
+  width:4.4ch;min-height:var(--cd-step);padding:3px 6px;
+  border:1px solid var(--line);border-radius:var(--r);
+  background:var(--inset);color:var(--ink);box-shadow:var(--rail-in);
+  appearance:none;-webkit-appearance:none;
+}
+.cd-in::-webkit-outer-spin-button,.cd-in::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+.cd-u{font-size:12px;color:var(--grey);width:3.4ch;flex:none}
+.cd-step{
+  flex:none;position:relative;min-width:var(--cd-step);height:var(--cd-step);padding:0;
+  font-size:19px;font-weight:400;letter-spacing:0;line-height:1;
+  display:grid;place-items:center;touch-action:manipulation;
+  transition:background var(--t-fast) var(--ease),opacity var(--t-fast) var(--ease);
+}
+.cd-step:active:not(:disabled){background:var(--inset);box-shadow:var(--rail-in)}
+@media (max-width:439px){ .cd-rl{flex:1 1 100%} }
+
+.cd-act{display:flex;gap:7px;flex-wrap:wrap;align-items:center;padding-top:13px}
+/* the primary action reads heavier by weight of line, not by a second accent */
+.cd-log{border-color:var(--ink-2);color:var(--ink);min-height:44px;padding:6px 18px;font-size:11px}
+.cd-act .btn{min-height:44px}
+
+/* ---------------------------------------------------------------- history */
+.cd-hd2{border-top:1px solid var(--line);box-shadow:inset 0 1px 0 var(--hilite),0 1px 0 var(--hilite)}
+.cd-hist{display:flex;flex-direction:column}
+.cd-r{
+  display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:11px;align-items:center;
+  padding:10px 0;min-height:44px;
+  border-bottom:1px solid var(--line);box-shadow:0 1px 0 var(--hilite);
+}
+.cd-r:last-child{border-bottom:0;box-shadow:none}
+.cd-r .cd-d{font-size:12.5px;font-weight:700;white-space:nowrap;font-variant-numeric:tabular-nums}
+.cd-r .cd-s{font-size:12.5px;color:var(--ink-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-variant-numeric:tabular-nums}
+.cd-r .cd-v{display:flex;flex-direction:column;align-items:flex-end;gap:1px;white-space:nowrap}
+.cd-r .cd-v b{font-size:13.5px;font-weight:700;font-variant-numeric:tabular-nums;font-feature-settings:"tnum" 1}
+.cd-r .cd-v i{font-style:normal;font-size:9px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--warn)}
+.cd-r .cd-v i[data-t="unval"]{color:var(--bad)}
+.cd-r[data-t="unval"] .cd-v b{color:var(--ink-2);font-weight:400}
+.cd-foot{margin-top:10px;font-size:11.5px;line-height:1.45;color:var(--grey);max-width:56ch}
+.cd-more{margin-top:10px}
+.cd-empty{font-size:13px;line-height:1.5;color:var(--ink-2);max-width:52ch}
+
+@media (prefers-reduced-motion:reduce){ .cd-ptr,.cd-step{transition:none} }
+
+</style>
+<style>
+
+/* ============================================================================
+   13 — BACKUP (bk-) + iOS HARDENING
+   Consumes worker 1's tokens through var(). Defines no token, uses no colour
+   literal. Every class invented here starts with bk-.
+   ========================================================================== */
+
+/* §10 trap 1 — [hidden] loses to any class that sets display. Line one. */
+[hidden]{display:none!important}
+
+/* ------------------------------------------------------------------ panel */
+.bk-bd{padding:12px}
+.bk-hd{font-variant-numeric:tabular-nums}
+
+/* gauge cluster — engraved vertical grooves, same technique rotated 90 deg */
+.bk-gauges{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px 0;margin-bottom:12px}
+.bk-g{
+  display:flex;flex-direction:column;gap:3px;min-width:0;padding:1px 14px;
+  border-left:1px solid var(--line);box-shadow:inset 1px 0 0 var(--hilite);
+}
+.bk-gauges > .bk-g:nth-child(2n+1){padding-left:0;border-left:0;box-shadow:none}
+.bk-g > b{
+  font-size:15px;font-weight:700;letter-spacing:-.018em;
+  font-variant-numeric:tabular-nums;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.bk-cap{
+  font-size:9.5px;color:var(--grey);min-height:12px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+@media (min-width:520px){
+  .bk-gauges{grid-template-columns:repeat(4,minmax(0,1fr))}
+  .bk-gauges > .bk-g:nth-child(2n+1){
+    padding-left:14px;border-left:1px solid var(--line);box-shadow:inset 1px 0 0 var(--hilite);
+  }
+  .bk-gauges > .bk-g:first-child{padding-left:0;border-left:0;box-shadow:none}
+}
+
+/* --------------------------------------------------------------- sections */
+.bk-sec{padding:12px 0 2px}
+.bk-row{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;min-height:32px}
+.bk-outhd{margin-top:10px}
+.bk-acts{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.bk-note{font-size:11.5px;line-height:1.5;color:var(--ink-2);max-width:58ch;margin-top:7px}
+.bk-msg{font-size:11.5px;line-height:1.5;color:var(--ink-2);max-width:58ch;margin-top:9px}
+.bk-msg[data-tone="ok"]{color:var(--ok)}
+.bk-msg[data-tone="warn"]{color:var(--warn)}
+.bk-msg[data-tone="bad"]{color:var(--bad)}
+.bk-msg ul{margin:5px 0 0;padding-left:15px}
+.bk-msg li{margin-top:3px}
+.bk-warn{font-size:11.5px;line-height:1.5;color:var(--bad);max-width:58ch;margin-top:9px}
+
+/* a label styled as a button needs the pointer the <button> gets for free */
+label.btn{cursor:pointer}
+
+/* ------------------------------------------------------------- text boxes */
+.bk-ta{
+  display:block;width:100%;margin-top:9px;
+  font-family:var(--sans);         /* one family; no second face, not even for JSON */
+  font-size:16px;                  /* under 16px iOS zooms the page on focus */
+  font-weight:400;line-height:1.45;
+  min-height:86px;max-height:34dvh;resize:vertical;
+  padding:9px;border:1px solid var(--line);border-radius:var(--r);
+  background:var(--inset);color:var(--ink);
+  box-shadow:var(--rail-in);
+  appearance:none;-webkit-appearance:none;
+  overflow:auto;
+  overscroll-behavior:contain;              /* a flick inside must not move the frame */
+  -webkit-overflow-scrolling:touch;         /* momentum inside the box */
+  -webkit-user-select:text;user-select:text;
+  -webkit-touch-callout:default;            /* keep long-press Select All / Copy alive */
+}
+.bk-ta::placeholder{color:var(--grey)}
+
+/* ---------------------------------------------------------------- preview */
+.bk-pv{margin-top:11px}
+.bk-pvr{
+  display:grid;grid-template-columns:78px minmax(0,1fr);gap:10px;align-items:baseline;
+  padding:7px 0;border-bottom:1px solid var(--line);box-shadow:0 1px 0 var(--hilite);
+}
+.bk-pvr:last-child{border-bottom:0;box-shadow:none}
+.bk-pvv{font-size:11.5px;line-height:1.5;color:var(--ink)}
+.bk-pvv b{font-weight:700;font-variant-numeric:tabular-nums}
+.bk-pvv .bk-q{color:var(--grey);font-variant-numeric:tabular-nums}
+.bk-pvv .bk-x{color:var(--warn)}
+
+.bk-do{display:flex;gap:7px;flex-wrap:wrap;align-items:center;margin-top:12px}
+
+/* restore point — an engraved row, not a tinted card */
+.bk-rp{
+  display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:space-between;
+  margin-top:12px;padding-top:9px;border-top:1px solid var(--line);box-shadow:0 -1px 0 var(--hilite) inset;
+}
+.bk-rpt{display:block;font-size:11.5px;line-height:1.5;color:var(--ink-2);font-variant-numeric:tabular-nums}
+
+/* visually hidden, still operable (the file input the label drives) */
+.bk-sr{
+  position:absolute;width:1px;height:1px;padding:0;margin:-1px;
+  overflow:hidden;clip:rect(0 0 0 0);clip-path:inset(50%);white-space:nowrap;border:0;
+}
+
+/* ============================================================================
+   iOS HARDENING — drop-in. Rules marked (dup) already exist in
+   01-foundation.css / 07-app.css; repeated so this file stands alone.
+   ========================================================================== */
+
+/* text never resizes on rotation (dup) */
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+
+/* no grey flash box on tap (dup) */
+html,body{-webkit-tap-highlight-color:transparent}
+
+/* a flick past the end of the page must not rubber-band the whole frame */
+html,body{overscroll-behavior-y:none}
+
+/* 16px floor on EVERY field. Below it iOS zooms in on focus and never zooms
+   back out; the user is then left panning a magnified panel one-handed. */
+input,select,textarea{font-size:16px}
+
+/* no 300ms double-tap-zoom delay on anything operable in this panel */
+.bk-root button,.bk-root label.btn,.bk-root summary,.bk-nozoom{touch-action:manipulation}
+.bk-nodrag{touch-action:none}                 /* faders/rails that own the gesture */
+
+/* full height that survives the URL bar. vh is the LARGE viewport on iOS and
+   does not change as the bar collapses, so a vh-sized shell is taller than the
+   screen mid-scroll; dvh tracks it. Keep the vh line as the fallback. */
+.bk-fill{min-height:100vh;min-height:100dvh}
+
+/* fixed furniture clears the Dynamic Island and the home indicator. env()
+   resolves to 0 inside the artifact iframe and without viewport-fit=cover, so
+   it is ALWAYS wrapped in max() with a real floor — never used bare. */
+.bk-safe-t{padding-top:max(0px,env(safe-area-inset-top))}
+.bk-safe-b{padding-bottom:max(9px,env(safe-area-inset-bottom))}
+.bk-safe-x{padding-left:max(12px,env(safe-area-inset-left));padding-right:max(12px,env(safe-area-inset-right))}
+
+/* any region that scrolls inside itself */
+.bk-scroll{overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;min-height:0}
+
+/* iOS does not shrink the layout viewport for the software keyboard, so a
+   position:fixed bar floats over the field being typed into. initBackup sets
+   data-bk-kb on <html> while a text field holds focus; put data-bk-hide-on-kb
+   on the fixed bar to fold it away for the duration. */
+:root[data-bk-kb="1"] [data-bk-hide-on-kb]{display:none!important}
+
+/* iOS renders a select/textarea with the UA's own chrome unless told not to */
+.bk-root select,.bk-root textarea,.bk-root input{appearance:none;-webkit-appearance:none;border-radius:var(--r)}
+
+</style>
+<style>
 /* ============================================================================
    02-07 — COMPONENTS + LAYOUT
    fd- fader · tm- timer · mh- masthead · lg- log · dv- device · pn- panel
@@ -462,64 +795,17 @@ button,input,select,textarea{font-family:inherit;color:inherit}
 @media (min-width:760px){
   .cols{grid-template-columns:minmax(360px,1.02fr) minmax(340px,.98fr)}
   #p-console{grid-column:1;grid-row:1}
-  #p-today  {grid-column:2;grid-row:1/span 3}
   #p-hist   {grid-column:1;grid-row:2}
   #p-set    {grid-column:1;grid-row:3}
+  #p-backup {grid-column:1;grid-row:4}
+  #p-today  {grid-column:2;grid-row:1}
+  #p-cardio {grid-column:2;grid-row:2/span 3}
   /* §7 the control panel scrolls inside itself; dvh, not vh — the iOS URL bar
      changes vh mid-scroll and the panel would resize under the thumb. */
-  #p-today{max-height:calc(100dvh - 152px);overflow-y:auto;overscroll-behavior:contain}
+  #p-today{max-height:calc(100dvh - 190px);overflow-y:auto;overscroll-behavior:contain}
 }
 @media (min-width:1100px){
   .cols{grid-template-columns:minmax(420px,1fr) minmax(400px,1fr)}
-}
-
-/* ---------------------------------------------------------------- masthead */
-.mh-sig{height:3px;background:var(--signal);margin:0 -12px}
-.mh-top{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;padding:9px 0 8px}
-.mh-mark{display:flex;flex-direction:column;gap:2px}
-.mh-gauges{display:flex;flex-wrap:wrap;row-gap:8px}
-.mh-g{display:flex;flex-direction:column;gap:3px;padding:1px 14px;min-width:0}
-.mh-g:first-child{padding-left:0}
-.mh-g > b{
-  font-size:15px;font-weight:700;letter-spacing:-.018em;
-  font-variant-numeric:tabular-nums;
-  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:19ch;
-}
-.mh-cap{font-size:9.5px;color:var(--grey);display:flex;align-items:center;gap:5px;min-height:12px}
-/* §9 provenance — a flag beside every derived figure, always visible */
-.mh-flag{font-size:8.5px;font-weight:700;letter-spacing:.14em;text-transform:uppercase}
-.mh-flag.ok{color:var(--ok)}
-.mh-flag.est{color:var(--warn)}
-
-/* the vertical groove between gauge cells, suppressed at the start of each
-   wrapped row so no orphaned rule appears on iPhone */
-.mh-g{border-left:1px solid var(--line);box-shadow:inset 1px 0 0 var(--hilite)}
-.mh-g:first-child{border-left:0;box-shadow:none}
-@media (max-width:539px){
-  .mh-g{width:50%;padding-left:12px}
-  .mh-g:nth-child(odd){border-left:0;box-shadow:none;padding-left:0}
-}
-
-/* level strip — one band per exercise, width = its share of the session */
-.mh-strip{display:flex;align-items:center;gap:9px;padding:2px 0 13px}
-.mh-grille{
-  width:54px;height:13px;flex:none;
-  background-image:radial-gradient(circle at center,var(--line) 1.55px,transparent 1.7px);
-  background-size:9px 9px;
-}
-.mix{flex:1;display:flex;height:7px;background:var(--inset);box-shadow:var(--rail-in);position:relative;min-width:0}
-.mix i{display:block;height:100%;position:relative;overflow:hidden;background:var(--line)}
-.mix i+i{border-left:1px solid var(--panel)}
-.mix i span{
-  display:block;height:100%;width:0;background:var(--ok);
-  transition:width var(--t-slow) var(--ease-out);
-}
-/* the active exercise reads as strong neutral, never a second orange lamp */
-.mix i[data-active="1"]{background:var(--line);box-shadow:inset 0 0 0 1px var(--grey)}
-.mix::after{
-  content:"";position:absolute;left:0;right:0;top:calc(100% + 3px);height:5px;
-  background-image:linear-gradient(90deg,var(--line) 1px,transparent 1px);
-  background-size:10% 100%;
 }
 
 /* ----------------------------------------------------------------- console */
@@ -680,9 +966,338 @@ body{padding-bottom:150px}
 }
 
 </style>
+<style>
+
+/* ============================================================================
+   12 — MASTHEAD · PAGE GUTTERS · TYPE SCALE                        (worker 3)
+
+   LOAD ORDER: this block must come AFTER the foundation (§3 type roles) and
+   after the component CSS. It supersedes the fixed §3 sizes and the old #app
+   padding. The five superseding rules are written `html .x` (specificity 0,1,1)
+   so they win even if the integrator lands this block early.
+
+   Defines no colour. Every value is var() off the shared token contract.
+   ========================================================================= */
+
+
+/* ----------------------------------------------------------------------------
+   §3 · TYPE SCALE FOR A THREE-FOOT VIEWING DISTANCE
+
+   The old scale (13px body, 9.5px .lbl, 15px gauge value) is an arm's-length
+   scale: it assumes ~16in / 406mm to the glass. This user reads an iPad at
+   36in / 914mm. Holding the same visual angle needs 36/16 = 2.25x more
+   PHYSICAL size on the glass.
+
+   It does NOT need 2.25x more CSS px, because a CSS px is not the same physical
+   size on the two devices:
+     iPhone 17 Pro Max   440pt wide, ~153ppi in points  -> 1px = 0.166mm
+     iPad Pro 11"        834pt wide,  132ppi in points  -> 1px = 0.192mm
+   The iPad point is already 1.16x larger. So the CSS multiplier for true
+   angular parity is 2.25 / 1.16 = ~1.95x, not 2.25x.
+
+   Parity with a baseline that was itself slightly small is not the target
+   though, so the readouts get more than parity and the legends get less:
+     13px @ 16in on iPhone  = 1.55mm cap = 13.1 arcmin
+     32px @ 36in on iPad    = 4.40mm cap = 16.6 arcmin   (--fs-val, +27%)
+     15px @ 36in on iPad    = 2.06mm cap =  7.8 arcmin   (--fs-lbl)
+   Legends sit lower on purpose: they are bold, tracked, all-caps, and their
+   vocabulary is fixed and memorised (DATE / ELAPSED / REMAINING never change),
+   so they are recognised, not read. Pushing them to reading size would turn a
+   legend into a heading, which §3 forbids.
+
+   clamp() interpolates between the phone value at 440px and the iPad value at
+   1024px viewport width, so an iPhone at arm's length keeps the small end and
+   an iPad — portrait 834 or landscape 1180 in-frame — gets the large end.
+   Six distinct steps, no two within 10% of each other: the hierarchy steepens,
+   it does not flatten.
+------------------------------------------------------------------------------*/
+:root{
+  --fs-word : clamp(30px,   14.9px + 3.42vw, 50px);    /* logotype            */
+  --fs-val  : clamp(22px,   14.5px + 1.71vw, 32px);    /* primary readout     */
+  --fs-val-2: clamp(17px,   11.7px + 1.20vw, 24px);    /* secondary readout   */
+  --fs-unit : clamp(10px,    7.7px + 0.51vw, 13px);    /* unit beside a value */
+  --fs-body : clamp(14.5px, 12.6px + 0.43vw, 17px);    /* body copy           */
+  --fs-cap  : clamp(12px,   10.1px + 0.43vw, 14.5px);  /* caption / small     */
+  --fs-lbl  : clamp(11px,    8.0px + 0.68vw, 15px);    /* engraved legend     */
+  --fs-plate: clamp(10px,    7.4px + 0.60vw, 13.5px);  /* type plate          */
+  --fs-flag : clamp(9.5px,   7.2px + 0.51vw, 12.5px);  /* provenance flag     */
+  --fs-btn  : clamp(11px,    9.5px + 0.34vw, 13px);    /* button legend       */
+}
+
+/* the §3 roles now read from the scale instead of carrying a fixed px value */
+html body      { font-size:var(--fs-body); }
+html .lbl      { font-size:var(--fs-lbl);  }   /* colour/tracking unchanged */
+html .plate    { font-size:var(--fs-plate);}
+html .wordmark { font-size:var(--fs-word); }
+html .sm       { font-size:var(--fs-cap);  }
+html .btn      { font-size:var(--fs-btn);  }
+
+
+/* ----------------------------------------------------------------------------
+   §7 · PAGE GUTTERS
+   The artifact renders in a chromeless iframe, so content that starts at pixel
+   zero has nothing to sit inside and reads as a rendering fault. The plate is
+   inset from the frame on all four sides, and the inset grows with the frame.
+   (Also fixes the old rule, which paired padding-right with inset-LEFT.)
+------------------------------------------------------------------------------*/
+html #app{
+  --mh-gut:clamp(14px,3.1vw,38px);
+  max-width:1280px;
+  margin:0 auto;
+  padding-top   :max(clamp(16px,2.4vw,34px),env(safe-area-inset-top));
+  padding-right :max(var(--mh-gut),env(safe-area-inset-right));
+  padding-bottom:env(safe-area-inset-bottom);
+  padding-left  :max(var(--mh-gut),env(safe-area-inset-left));
+}
+
+
+/* ----------------------------------------------------------------------------
+   §5 · MASTHEAD
+------------------------------------------------------------------------------*/
+#mast{display:block}
+
+.mh-sig{
+  height:clamp(3px,.36vw,4px);
+  background:var(--signal);
+  border-radius:1px;
+}
+
+.mh-top{
+  display:flex;flex-wrap:wrap;align-items:flex-end;
+  column-gap:clamp(18px,2.6vw,34px);
+  row-gap:clamp(18px,2.4vw,30px);
+  padding:clamp(16px,2.3vw,28px) 0 clamp(18px,2.5vw,30px);
+}
+
+/* --- mark ---------------------------------------------------------------- */
+.mh-mark{flex:0 0 auto;min-width:0}
+.mh-word{line-height:1;letter-spacing:-.04em;font-weight:700;color:var(--ink);white-space:nowrap}
+/* §4 names the type-plate underline as an engraved use. Groove, not border. */
+.mh-plate{
+  margin-top:clamp(6px,.8vw,10px);
+  padding-bottom:clamp(5px,.7vw,9px);
+  border-bottom:1px solid var(--line);
+  box-shadow:0 1px 0 var(--hilite);
+  white-space:nowrap;
+}
+
+/* --- gauge cluster ------------------------------------------------------- */
+/* The cluster sits beside the mark when it can get 560px, and drops to its own
+   full-width row when it cannot. Column count is decided by the space the grid
+   ACTUALLY has, not by viewport width, so the wordmark's width cannot push the
+   cells into a layout the media query did not predict. */
+.mh-gauges{
+  flex:1 1 560px;min-width:0;
+  container-type:inline-size;container-name:mh-gauges;
+}
+
+.mh-grid{
+  --mh-cgap:clamp(14px,1.9vw,26px);
+  --mh-rgap:clamp(16px,2.1vw,26px);
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  column-gap:var(--mh-cgap);
+  row-gap:var(--mh-rgap);
+  padding:0;          /* load-bearing: see the wrap rule below */
+  overflow:hidden;    /* load-bearing: see the wrap rule below */
+}
+
+/* 440 (iPhone), 834 (iPad portrait) and 1180 (iPad landscape in-frame) all land
+   on 3 x 2 — the same block on every target device. 6 across only when the grid
+   genuinely has room for a 9-character legend in every cell; 2 across as a floor
+   for split-view widths. */
+@container mh-gauges (min-width:900px){
+  .mh-grid{grid-template-columns:repeat(6,minmax(0,1fr))}
+}
+@container mh-gauges (max-width:299px){
+  .mh-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@supports not (container-type:inline-size){
+  @media (min-width:1240px){ .mh-grid{grid-template-columns:repeat(6,minmax(0,1fr))} }
+  @media (max-width:359px){ .mh-grid{grid-template-columns:repeat(2,minmax(0,1fr))} }
+}
+
+.mh-g{position:relative;display:flex;flex-direction:column;min-width:0;padding:0}
+
+/* THE WRAP RULE.
+   §5's cell divider is the engraved groove rotated 90 degrees: 1px --line with
+   a 1px --hilite to its right. It must appear BETWEEN cells and never at the
+   start of a row — including a wrapped row, whose first cell is not
+   :first-child. The old :nth-child(odd) fix hard-codes a 2-column layout and
+   breaks the moment the count or the column number changes.
+
+   Solved without knowing the column count: every cell draws its groove in the
+   gap to its LEFT, at a negative offset, and the grid clips its own overflow.
+   Cells in column 1 — of every row, wrapped or not — have their groove at a
+   negative x inside a clipping box that starts at x=0, so it is clipped away.
+   Cells in columns 2..n keep theirs. Works at 2, 3, 6 or any other count, and
+   for any number of cells. The groove also runs the full height of its row,
+   because grid stretches row siblings. */
+.mh-g::before{
+  content:"";position:absolute;top:0;bottom:0;
+  left:calc(-0.5 * var(--mh-cgap) - 1px);
+  width:2px;
+  background:linear-gradient(90deg,var(--line) 0 1px,var(--hilite) 1px 2px);
+}
+
+.mh-lbl{display:block;line-height:1.1;margin-bottom:clamp(4px,.5vw,7px)}
+
+.mh-val{
+  display:block;
+  font-size:var(--fs-val-2);font-weight:700;
+  letter-spacing:-.018em;line-height:1.02;color:var(--ink);
+  font-variant-numeric:tabular-nums;font-feature-settings:"tnum" 1;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  margin-bottom:clamp(3px,.45vw,6px);
+}
+/* ELAPSED and REMAINING are the two readouts the user is actually reading from
+   three feet away mid-set. They get the primary size; everything else steps down. */
+.mh-g[data-lead] .mh-val{font-size:var(--fs-val)}
+
+.mh-u{
+  font-size:var(--fs-unit);font-weight:700;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--grey);margin-left:.45em;
+}
+.mh-u:empty{display:none}   /* no orphaned margin when a cell carries no unit */
+
+/* --ink-2, not --grey: at 914mm a 2.9:1 caption is not readable, and the
+   hierarchy is already carried by 32px/700 against 14.5px/400. */
+.mh-cap{
+  display:block;font-size:var(--fs-cap);line-height:1.25;color:var(--ink-2);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+
+/* §9 — a badge slot in the template from the start. The slot is reserved on
+   every cell, so a cell with no provenance shows an empty slot rather than
+   shortening: the absence is itself information, and the rows stay aligned. */
+.mh-flag{
+  display:block;font-size:var(--fs-flag);font-weight:700;letter-spacing:.14em;
+  text-transform:uppercase;line-height:1.3;min-height:1.3em;color:var(--grey);
+  margin-top:clamp(3px,.4vw,5px);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.mh-flag[data-p="ok"] {color:var(--ok)}
+.mh-flag[data-p="est"]{color:var(--warn)}
+
+/* --- level strip --------------------------------------------------------- */
+.mh-strip{
+  display:flex;align-items:center;
+  gap:clamp(10px,1.3vw,18px);
+  padding:0 0 clamp(18px,2.4vw,30px);   /* clears the tick scale's overhang */
+}
+/* §5 — the grille appears once, small, as texture. Not a full-width band. */
+.mh-grille{
+  width:clamp(54px,5.4vw,74px);height:clamp(13px,1.4vw,18px);flex:none;
+  background-image:radial-gradient(circle at center,var(--line) 1.55px,transparent 1.7px);
+  background-size:9px 9px;
+}
+.mh-mix{
+  flex:1;min-width:0;display:flex;position:relative;
+  height:clamp(7px,.85vw,11px);
+  background:var(--inset);box-shadow:var(--rail-in);
+}
+.mh-mix i{display:block;height:100%;position:relative;overflow:hidden;background:var(--line)}
+.mh-mix i+i{border-left:1px solid var(--panel)}
+.mh-mix i span{
+  display:block;height:100%;width:0;background:var(--ok);
+  transition:width var(--t-slow) var(--ease-out);
+}
+/* the active exercise reads as strong neutral — never a second orange lamp */
+.mh-mix i[data-active="1"]{background:var(--line);box-shadow:inset 0 0 0 1px var(--grey)}
+.mh-mix::after{
+  content:"";position:absolute;left:0;right:0;top:calc(100% + 3px);height:5px;
+  background-image:linear-gradient(90deg,var(--line) 1px,transparent 1px);
+  background-size:10% 100%;
+}
+/* §6 — nothing animates on arrival. The bands take their first widths with the
+   transition suppressed; it is switched on one frame later. */
+.mh-mix.mh-noanim i span{transition:none}
+
+.mh-edge{
+  height:0;
+  border-bottom:1px solid var(--line);box-shadow:0 1px 0 var(--hilite);
+  margin-bottom:clamp(14px,2vw,24px);
+}
+
+@media (prefers-reduced-motion:reduce){
+  .mh-mix i span{transition:none}
+}
+
+</style>
 
 <div id="app" data-live="fader">
-  <div id="mast"></div>
+  <div id="mast">
+
+  <!-- §5 the signal bar: the top edge of the faceplate. It spans the plate, not
+       the frame — the gutters around it are what stop the panel reading as broken. -->
+  <div class="mh-sig" aria-hidden="true"></div>
+
+  <div class="mh-top">
+
+    <div class="mh-mark">
+      <div class="wordmark mh-word">ONE&middot;BELL</div>
+      <div class="plate mh-plate">Type 1 &middot; Single bell &middot; Rev 2</div>
+    </div>
+
+    <div class="mh-gauges">
+      <div class="mh-grid" data-mh-grid role="group" aria-label="Session readout">
+
+        <div class="mh-g" data-k="date">
+          <span class="lbl mh-lbl">Date</span>
+          <b class="mh-val"><span data-v>&mdash;</span><i class="mh-u" data-u></i></b>
+          <span class="mh-cap" data-c>not started</span>
+          <span class="mh-flag" data-f></span>
+        </div>
+
+        <div class="mh-g" data-k="elapsed" data-lead>
+          <span class="lbl mh-lbl">Elapsed</span>
+          <b class="mh-val"><span data-v>&mdash;</span><i class="mh-u" data-u></i></b>
+          <span class="mh-cap" data-c>not started</span>
+          <span class="mh-flag" data-f></span>
+        </div>
+
+        <div class="mh-g" data-k="remaining" data-lead>
+          <span class="lbl mh-lbl">Remaining</span>
+          <b class="mh-val"><span data-v>&mdash;</span><i class="mh-u" data-u></i></b>
+          <span class="mh-cap" data-c>no sets logged</span>
+          <span class="mh-flag" data-f></span>
+        </div>
+
+        <div class="mh-g" data-k="burn">
+          <span class="lbl mh-lbl">Burn</span>
+          <b class="mh-val"><span data-v>&mdash;</span><i class="mh-u" data-u></i></b>
+          <span class="mh-cap" data-c>no time yet</span>
+          <span class="mh-flag" data-f></span>
+        </div>
+
+        <div class="mh-g" data-k="bell">
+          <span class="lbl mh-lbl">Bell</span>
+          <b class="mh-val"><span data-v>&mdash;</span><i class="mh-u" data-u></i></b>
+          <span class="mh-cap" data-c></span>
+          <span class="mh-flag" data-f></span>
+        </div>
+
+        <div class="mh-g" data-k="sets">
+          <span class="lbl mh-lbl">Sets</span>
+          <b class="mh-val"><span data-v>&mdash;</span><i class="mh-u" data-u></i></b>
+          <span class="mh-cap" data-c></span>
+          <span class="mh-flag" data-f></span>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+
+  <div class="mh-strip">
+    <div class="mh-grille" aria-hidden="true"></div>
+    <div class="mh-mix mh-noanim" data-mh-mix role="img" aria-label="Session progress by exercise"></div>
+  </div>
+
+  <!-- §4 the masthead edge: a groove, not a drawn line -->
+  <div class="mh-edge" aria-hidden="true"></div>
+
+</div>
 
   <div class="cols">
     <section class="pn" id="p-console">
@@ -730,9 +1345,62 @@ body{padding-bottom:150px}
     </section>
 
     <section class="pn" id="p-today">
-      <div class="pn-hd"><span class="lbl">Today</span><span class="lbl">Sets logged</span></div>
+      <div class="pn-hd"><span class="lbl">Today</span><span class="lbl" data-score>&mdash;</span></div>
       <div class="pn-bd" id="today"></div>
     </section>
+
+<section class="pn cd cd-init" id="p-cardio" data-cd-root aria-labelledby="cd-title">
+  <div class="pn-hd">
+    <span class="lbl" id="cd-title">Treadmill</span>
+    <span class="lbl" data-cd-mass>&mdash;</span>
+  </div>
+
+  <div class="pn-bd">
+    <div class="cd-read">
+      <div class="cd-val">
+        <span class="lbl">Net energy cost</span>
+        <div class="cd-numwrap">
+          <span class="cd-num tnum" data-cd-kcal>&mdash;</span>
+          <span class="cd-unit">kcal</span>
+        </div>
+      </div>
+      <span class="cd-flag" data-cd-flag data-t="none">&mdash;</span>
+    </div>
+    <p class="cd-sub" data-cd-sub>&mdash;</p>
+
+    <div class="cd-gauges" data-cd-gauges></div>
+
+    <p class="cd-note" data-cd-console>&mdash;</p>
+    <div class="cd-caveats" data-cd-caveats></div>
+    <p class="cd-method" data-cd-method>&mdash;</p>
+
+    <hr class="sep">
+
+    <div class="cd-model">
+      <span class="lbl">Speed model</span>
+      <div class="cd-strip inset" data-cd-strip role="img" aria-label="Speed against each equation's validated range"></div>
+      <div class="cd-ticks" data-cd-ticks aria-hidden="true"></div>
+      <div class="cd-labs" data-cd-labs aria-hidden="true"></div>
+      <div class="cd-zones" data-cd-zones aria-hidden="true"></div>
+    </div>
+
+    <hr class="sep">
+
+    <div data-cd-ctl></div>
+
+    <div class="cd-act">
+      <button class="btn cd-log" type="button" data-cd-log>Log session</button>
+      <span class="cd-sp"></span>
+      <button class="btn" type="button" data-cd-recall>Recall last</button>
+    </div>
+  </div>
+
+  <div class="pn-hd cd-hd2">
+    <span class="lbl">Cardio log</span>
+    <span class="lbl" data-cd-count>&mdash;</span>
+  </div>
+  <div class="pn-bd" data-cd-hist></div>
+</section>
 
     <section class="pn" id="p-hist">
       <div class="pn-hd">
@@ -788,6 +1456,83 @@ body{padding-bottom:150px}
         <p class="sm grey" data-sync style="margin-top:7px">Stored on this device</p>
       </div>
     </details>
+
+    <details class="pn bk-root" id="p-backup" data-bk-root>
+  <summary><span class="lbl">Backup</span><span class="lbl bk-hd" data-bk-sum>&mdash;</span></summary>
+  <div class="pn-bd bk-bd">
+
+    <!-- gauge cluster: what a backup taken now would carry -->
+    <div class="bk-gauges">
+      <div class="bk-g"><span class="lbl">Sessions</span><b data-bk-gs>0</b><span class="bk-cap" data-bk-gsc>&nbsp;</span></div>
+      <div class="bk-g"><span class="lbl">Sets</span><b data-bk-gt>0</b><span class="bk-cap" data-bk-gtc>&nbsp;</span></div>
+      <div class="bk-g"><span class="lbl">Span</span><b data-bk-gp>&mdash;</b><span class="bk-cap">first to last</span></div>
+      <div class="bk-g"><span class="lbl">File</span><b data-bk-gb>&mdash;</b><span class="bk-cap">json, measured</span></div>
+    </div>
+
+    <hr class="sep">
+
+    <!-- ------------------------------------------------------------ export -->
+    <div class="bk-sec">
+      <div class="bk-row">
+        <span class="lbl">Export</span>
+        <span class="bk-acts">
+          <button class="btn" type="button" data-bk-xj>Export JSON</button>
+          <button class="btn" type="button" data-bk-xc>Export CSV</button>
+        </span>
+      </div>
+      <p class="bk-note" data-bk-xnote></p>
+      <div data-bk-outwrap hidden>
+        <div class="bk-row bk-outhd">
+          <span class="lbl" data-bk-outlbl>JSON</span>
+          <span class="bk-acts">
+            <button class="btn" type="button" data-bk-copy>Copy</button>
+            <button class="btn" type="button" data-bk-outclose>Close</button>
+          </span>
+        </div>
+        <textarea class="bk-ta" data-bk-outta spellcheck="false" autocapitalize="off"
+                  autocorrect="off" autocomplete="off" aria-label="Backup text to copy"></textarea>
+      </div>
+      <p class="bk-msg" data-bk-xmsg hidden></p>
+    </div>
+
+    <hr class="sep">
+
+    <!-- ----------------------------------------------------------- restore -->
+    <div class="bk-sec">
+      <div class="bk-row">
+        <span class="lbl">Restore</span>
+        <span class="bk-acts">
+          <label class="btn" data-bk-pick>Choose file</label>
+          <button class="btn" type="button" data-bk-read>Read backup</button>
+        </span>
+      </div>
+      <input class="bk-sr" type="file" data-bk-file
+             accept="application/json,.json,text/json,text/plain,.txt">
+      <textarea class="bk-ta" data-bk-in placeholder="Paste backup JSON" spellcheck="false"
+                autocapitalize="off" autocorrect="off" autocomplete="off"
+                aria-label="Backup JSON to restore"></textarea>
+      <p class="bk-msg" data-bk-msg hidden></p>
+
+      <div class="bk-pv" data-bk-pv hidden></div>
+
+      <div class="bk-do" data-bk-do hidden>
+        <button class="btn" type="button" data-bk-merge>Merge</button>
+        <button class="btn" type="button" data-bk-replace>Replace</button>
+        <button class="btn" type="button" data-bk-cancel>Cancel</button>
+      </div>
+      <p class="bk-warn" data-bk-armwarn hidden></p>
+
+      <div class="bk-rp" data-bk-rp hidden>
+        <div><span class="lbl">Restore point</span><span class="bk-rpt" data-bk-rpt></span></div>
+        <span class="bk-acts">
+          <button class="btn" type="button" data-bk-revert>Revert</button>
+          <button class="btn" type="button" data-bk-rpdrop>Discard</button>
+        </span>
+      </div>
+    </div>
+
+  </div>
+</details>
   </div>
 </div>
 
@@ -1121,6 +1866,863 @@ window.CORE={
   exportFile:async n=>{ if(!DL) return false; try{ await DL.save({filename:n,data:csv()}); return true; }catch(e){ return false; } }
 };
 })();
+
+</script>
+<script>
+/* ============================================================================
+   WORKER 1 — SCORING + AUTOREGULATION
+   window.SCORE — pure logic. No DOM, no styling, no colour, no storage.
+
+   ---------------------------------------------------------------------------
+   THE FORMULA
+   ---------------------------------------------------------------------------
+   Estimated 1RM — Wathan (1994):
+
+       e1RM = 100 * w / (48.8 + 53.8 * e^(-0.075 * r))
+
+   SOURCE / WHY THIS ONE
+     LeSuer, McCormick, Mayhew, Wasserstein & Arnold (1997), "The accuracy of
+     prediction equations for estimating 1-RM performance in the bench press,
+     squat, and deadlift", J Strength Cond Res 11(4):211-213. Seven equations,
+     67 untrained college students. Wathan was the only equation that did NOT
+     significantly underestimate the squat (every other equation was low by
+     2-8%) and was among the two best on the bench press. All seven equations
+     underestimated the deadlift.
+     Wathan's exponential form also matters here: this program lives at 8-12
+     reps and drifts to 15+ whenever a dumbbell stop is too light. Brzycki
+     (w / (1.0278 - 0.0278r)) has a linear denominator that hits zero at r=37
+     and is documented to degrade sharply past 10 reps. Epley (w * (1 + r/30))
+     grows without bound. Wathan is asymptotic (-> ~2.05w) and stays sane.
+
+   KNOWN ERROR BARS — read these before printing an e1RM anywhere
+     - LeSuer: r > 0.95 for all equations, but residual bias of 0.8-8% by lift.
+     - Consensus across validation work: roughly +/-5% at 2-10 reps, widening
+       to +/-10-15% above 10 reps. Mayhew et al. report accuracy is materially
+       better below 10 reps than above.
+     - Every one of those validations used BARBELL bench/squat/deadlift. None
+       used a one-arm dumbbell row, a floor press, or a single-leg-loaded RDL.
+     - So: this module uses Wathan as a REP-TO-LOAD EXCHANGE RATE inside a
+       score. It is not a prediction of this user's actual one-rep max and the
+       UI must never present it as one. e1rm() is exported because the caller
+       may want it; if it is ever shown, it is flagged estimated (§9).
+
+   ---------------------------------------------------------------------------
+   THE SCORE
+   ---------------------------------------------------------------------------
+       setScore = e1RM(w, min(r, target + 2)) * min(r, target + 2) / 100
+       session  = sum of setScore over every non-skipped set
+
+   Loads are converted to lb before scoring, so a kg-logged session and an
+   lb-logged session stay on one scale. The score itself is unitless.
+
+   The four properties this was built to satisfy:
+     1. MORE WEIGHT ALWAYS SCORES MORE. e1RM is linear in w, so setScore is
+        exactly proportional to w at fixed reps. No exceptions, no thresholds.
+     2. COMPARABLE ACROSS SESSIONS. The score reads only (weight, reps,
+        target). No moving reference, no bodyweight, no personal constants.
+        Identical work scores identically forever.
+     3. NOT GAMEABLE WITH JUNK REPS. Reps are credited to target + 2 and no
+        further — the NSCA 2-for-2 threshold, which is also the point at which
+        this module tells him to add weight. Past that the score refuses to pay
+        more, because the correct response to 20 reps is a heavier dumbbell.
+        A full session at 5 lb caps at ~23 points; the same session at working
+        weights is ~121. It is arithmetically impossible to out-rep the load.
+     4. ONE NUMBER. ~84 at the plan's starting weights, ~121 at realistic
+        working weights, ~180-220 at the top of the dumbbell. Three digits for
+        the life of the hardware.
+
+   NOT NORMALISED PER EXERCISE, AND NOT BODYWEIGHT-SCALED — both on purpose.
+     Per-exercise normalisation would mean inventing a constant that declares a
+     45 lb RDL equivalent to a 20 lb press. There is no evidence for such a
+     constant, it would silently change the score's meaning, and it would break
+     property 2 every time it was retuned (§9: refuse rather than guess). The
+     consequence is stated plainly: heavier-loadable lifts dominate the total,
+     and the overhead press moves it by about 1 point per stop. That is why
+     sessionScore returns a per-exercise breakdown — a slow lift's progress is
+     visible there, at full resolution, instead of being faked into the total.
+     Bodyweight scaling (Wilks / DOTS / allometric) is rejected outright:
+     those coefficients exist to compare DIFFERENT lifters at different
+     bodyweights on the powerlifting total, they are fitted to barbell
+     competition lifts, and applied here they would be a division by a
+     near-constant. Worse, they invert the point: losing 10 lb of bodyweight
+     would raise the score without a single extra rep being lifted.
+
+   ALSO CONSIDERED, REJECTED
+     - Volume load / tonnage (w * r * s). Fails property 3 by construction and
+       is documented to over-reward light high-rep work and inherently heavy
+       exercises. Kept as a raw figure elsewhere in the app; not the score.
+     - INOL, (reps / (100 - %1RM)). Needs a tested 1RM per exercise, which we
+       do not have for a one-arm dumbbell row and will not guess. It is also a
+       fatigue budget (target 0.4-1.0 per session) — rising INOL is a warning,
+       not an achievement. Wrong sign for a score.
+     - Session-RPE (Foster). Measures internal cost, not output: an easier
+       session scores LOWER even if more was lifted, which breaks property 1.
+       Computed anyway and returned as a SEPARATE field (`load`), because
+       "how hard was that" is a real and different question, and the difficulty
+       taps already pay for it.
+
+   ---------------------------------------------------------------------------
+   AUTOREGULATION — the governing principle
+   ---------------------------------------------------------------------------
+   MEASURED REPS OUTRANK REPORTED DIFFICULTY. Difficulty only breaks ties.
+     Steele et al. (2017, 141 participants) found lifters systematically
+     underpredict reps to failure: less-experienced trainees by ~4-5 reps,
+     experienced by ~1-2. Reported SEM for RIR estimates is 2.64-3.38 reps even
+     in trained lifters (Hackett et al. 2012; Zourdos et al. 2016). Zourdos
+     found novices' RPE-velocity relationship materially weaker than
+     experienced lifters' (r = -0.77 vs -0.88) and concluded novices should
+     practise recording RIR but not yet drive load off it alone.
+     So a "Max" tap is treated as evidence, never as proof of failure. Load
+     comes down only when the tap coincides with an actual rep shortfall.
+
+   THE JUMP SIZE IS THE BINDING CONSTRAINT
+     NSCA guidance for adding load is 2-5% upper body, 5-10% lower body.
+     Every gap on this dumbbell is larger than that, most of them by 2-5x:
+       5->7.5 = +50%   7.5->10 = +33%   10->12.5 = +25%   12.5->15 = +20%
+       15->17.5 = +17% 17.5->20 = +14%  20->22.5 = +13%   22.5->25 = +11%
+       25->30 = +20%   30->35 = +17%    35->40 = +14%     40->45 = +13%
+       45->50 = +11%   50->52.5 = +5%
+     One gap in fourteen (50 -> 52.5) is inside NSCA range. The overhead press
+     lives entirely in the +17% to +50% zone.
+     Consequence, computed rather than assumed: at a +17% jump, even 3x12 at
+     15 lb produces an e1RM below what 10 reps at 17.5 lb requires — roughly
+     18-20 reps at 15 lb would be needed to fully "earn" 17.5 lb inside an
+     8-12 rep window. The rep window is not wide enough. THE JUMP WILL ALWAYS
+     COST REPS. Two rules follow, and they are the core of this module:
+       (a) The bar to move up scales with the size of the jump.
+       (b) A rep drop in the first session at a new stop is EXPECTED and is
+           never treated as a failure. Load holds; reps rebuild. That is the
+           "double" in double progression, and it is the standard answer when
+           microloading is unavailable.
+     Because the score credits reps up to target+2, the score keeps rising
+     through the rep-rebuilding weeks — the weeks the weight readout cannot
+     reward. That is deliberate.
+   ========================================================================== */
+
+(function(){
+'use strict';
+
+/* ------------------------------------------------------------------ units */
+var LB_PER_KG = 2.2046226218;
+function conv(w, from, to){
+  if(!from || !to || from === to) return w;
+  if(from === 'kg' && to === 'lb') return w * LB_PER_KG;
+  if(from === 'lb' && to === 'kg') return w / LB_PER_KG;
+  return w;
+}
+function toLb(w, unit){ return (unit === 'kg') ? w * LB_PER_KG : w; }
+function n(v){ v = +v; return isFinite(v) ? v : 0; }
+function eq(a, b){ return Math.abs(a - b) < 1e-6; }
+function fmtW(w){
+  if(w == null) return '';
+  var s = (Math.round(w * 100) / 100).toString();
+  return s;
+}
+function wu(w, unit){ return fmtW(w) + (unit ? ' ' + unit : ''); }
+
+/* ------------------------------------------------------- difficulty scale */
+/* Three taps. Mapped onto the RIR-based RPE scale of Zourdos et al. (2016),
+   JSCR 30(1):267-275, and Helms et al. (2016), Strength Cond J 38(4):42-49:
+   RPE 10 = 0 RIR, 9 = 1 RIR, 8 = 2 RIR, 7 = 3 RIR.
+   The keys and captions match the buttons already in the app.
+   These RIR values are NOMINAL. See the calibration note above. */
+var ALIAS = {
+  clean:'clean', easy:'clean', ok:'clean', light:'clean', good:'clean', comfortable:'clean',
+  hard:'hard', difficult:'hard', moderate:'hard', tough:'hard', challenging:'hard',
+  max:'max', grind:'max', reallyhard:'max', veryhard:'max', limit:'max',
+  failure:'max', fail:'max', maximal:'max'
+};
+
+function normDiff(d){
+  if(d == null) return null;
+  if(typeof d === 'number'){                    /* treat a bare number as RPE */
+    if(!isFinite(d)) return null;
+    if(d >= 9.25) return 'max';
+    if(d >= 7.75) return 'hard';
+    if(d >= 5)    return 'clean';
+    return null;
+  }
+  var k = String(d).toLowerCase().replace(/[^a-z]/g, '');
+  return ALIAS[k] || null;
+}
+
+var DIFFICULTY = {
+  order: ['clean', 'hard', 'max'],
+  clean: {key:'clean', label:'Clean', caption:'3+ left',        rpe:7.00, rir:3,   rirRange:[3, 5]},
+  hard:  {key:'hard',  label:'Hard',  caption:'1\u20132 left',  rpe:8.50, rir:1.5, rirRange:[1, 2]},
+  max:   {key:'max',   label:'Max',   caption:'nothing left',   rpe:9.75, rir:0,   rirRange:[0, 1]},
+  aliases: ALIAS,
+  norm: normDiff,
+  rank: {clean:0, hard:1, max:2},
+  source: 'Zourdos et al. 2016 (JSCR 30:267-275); Helms et al. 2016 (SCJ 38:42-49).',
+  note: 'Nominal RIR. Steele et al. 2017 found less-experienced lifters underpredict ' +
+        'reps to failure by ~4-5 reps; reported SEM is 2.6-3.4 reps even in trained ' +
+        'lifters. Measured reps outrank these marks in every rule below.'
+};
+
+function entryDiff(e){
+  if(!e) return null;
+  var v = (e.diff != null) ? e.diff
+        : (e.difficulty != null) ? e.difficulty
+        : (e.mark != null) ? e.mark
+        : (e.rpe != null) ? e.rpe : null;
+  return normDiff(v);
+}
+function rpeOf(e){
+  var d = entryDiff(e);
+  return d ? DIFFICULTY[d].rpe : null;
+}
+
+/* -------------------------------------------------------------- estimated 1RM */
+/* Wathan (1994). See the header for source and error bars.
+   Returns a number in the same unit as `weight`. Callers must flag it
+   estimated if it is ever displayed (§9). Validated 2-10 reps; treat anything
+   above ~15 reps as indicative only. */
+function e1rm(weight, reps){
+  var w = n(weight), r = Math.round(n(reps));
+  if(w <= 0 || r <= 0) return 0;
+  if(r === 1) return w;                          /* the equation reads 1.013w at r=1 */
+  return (100 * w) / (48.8 + 53.8 * Math.exp(-0.075 * r));
+}
+
+/* --------------------------------------------------------------- set score */
+var REP_SURPLUS = 2;      /* reps credited above target — the NSCA 2-for-2 threshold */
+var SCORE_DIV   = 100;    /* scale only: puts a full session in three digits */
+
+function capReps(reps, target){
+  var r = Math.max(0, Math.round(n(reps)));
+  var t = Math.max(1, Math.round(n(target) || 10));
+  return Math.min(r, t + REP_SURPLUS);
+}
+
+/* One set's contribution. Returns a plain number; 0 for skipped or unusable.
+   opts: {target, unit, exWeight}  — all optional.
+   `exWeight` is a per-exercise multiplier. It defaults to 1 and SHOULD STAY
+   THERE: any other value is an assumption about how a 45 lb RDL compares to a
+   20 lb press, and it makes the score incomparable with every session scored
+   before it. sessionScore reports normalised:true when one is in play. */
+function setScore(entry, opts){
+  opts = opts || {};
+  if(!entry || entry.skipped) return 0;
+  var target = n(entry.target) || n(opts.target) || 10;
+  var unit   = entry.unit || opts.unit || 'lb';
+  var w      = toLb(n(entry.weight), unit);
+  var r      = capReps(entry.reps, target);
+  if(w <= 0 || r <= 0) return 0;
+  var mult = (opts.exWeight != null && isFinite(+opts.exWeight)) ? +opts.exWeight : 1;
+  return (e1rm(w, r) * r / SCORE_DIV) * mult;
+}
+
+/* ----------------------------------------------------------- session score */
+/* entries : this session's logged sets (the `entries` array on a session).
+   opts    : {plan, history, bestScore, durationMin, unit, exWeight:{id:mult}}
+   Returns {score, breakdown:[{ex,score}], best} plus the provenance the UI
+   needs to flag it. `best` is false unless there is a real complete baseline
+   to beat — a first session is never called a best (§9). */
+function sessionScore(entries, opts){
+  opts = opts || {};
+  var rows = Array.isArray(entries) ? entries
+           : (entries && Array.isArray(entries.entries)) ? entries.entries : [];
+  var exW  = opts.exWeight || {};
+  var normalised = false;
+  var i, k;
+  for(k in exW){ if(exW.hasOwnProperty(k) && +exW[k] !== 1) normalised = true; }
+
+  var order = [], byEx = {};
+  var scored = 0, marked = 0, rpeSum = 0;
+
+  for(i = 0; i < rows.length; i++){
+    var e = rows[i];
+    if(!e || !e.ex) continue;
+    if(!byEx[e.ex]){
+      byEx[e.ex] = {ex:e.ex, name:e.name || e.ex, raw:0, sets:0, skipped:0, topWeight:null, unit:e.unit || opts.unit || 'lb'};
+      order.push(e.ex);
+    }
+    var b = byEx[e.ex];
+    if(e.skipped){ b.skipped++; continue; }
+    var s = setScore(e, {unit:opts.unit, exWeight:exW[e.ex]});
+    if(s <= 0) continue;
+    b.raw += s;
+    b.sets++;
+    scored++;
+    if(b.topWeight == null || n(e.weight) > b.topWeight) b.topWeight = n(e.weight);
+    var rp = rpeOf(e);
+    if(rp != null){ marked++; rpeSum += rp; }
+  }
+
+  var raw = 0;
+  var breakdown = order.map(function(id){
+    var b = byEx[id];
+    raw += b.raw;
+    return {ex:b.ex, name:b.name, score:Math.round(b.raw), raw:b.raw,
+            sets:b.sets, skipped:b.skipped, topWeight:b.topWeight, unit:b.unit};
+  });
+  var score = Math.round(raw);
+
+  /* completeness — needed before this session can be ranked at all */
+  var setsPlanned = null;
+  if(Array.isArray(opts.plan)){
+    setsPlanned = 0;
+    for(i = 0; i < opts.plan.length; i++){
+      var p = opts.plan[i];
+      setsPlanned += n(p.sets) * (p.perSide ? 2 : 1);
+    }
+  }
+  var complete = (setsPlanned == null) ? null : (scored >= setsPlanned);
+
+  /* baseline */
+  var bestScore = null, prevScore = null;
+  if(opts.bestScore != null && isFinite(+opts.bestScore)) bestScore = +opts.bestScore;
+  if(Array.isArray(opts.history)){
+    for(i = 0; i < opts.history.length; i++){
+      var h = opts.history[i];
+      if(!h || !Array.isArray(h.entries) || !h.entries.length) continue;
+      var hs = sessionScore(h.entries, {plan:opts.plan, unit:opts.unit, exWeight:exW});
+      if(hs.complete === false) continue;              /* partial sessions never set the bar */
+      if(bestScore == null || hs.score > bestScore) bestScore = hs.score;
+      prevScore = hs.score;
+    }
+  }
+  var best = !!(complete === true && bestScore != null && score > bestScore);
+
+  /* Foster session-RPE, kept separate from the score. AU = mean set RPE x min.
+     Foster's original takes ONE rating for the whole session; using the mean
+     of per-set marks is an adaptation and is flagged as such. */
+  var load = null, loadNote = null;
+  var durationMin = (opts.durationMin != null) ? n(opts.durationMin) : null;
+  if(!scored){
+    loadNote = 'No sets logged.';
+  } else if(durationMin == null || durationMin <= 0){
+    loadNote = 'No session duration. Not computed.';
+  } else if(marked < scored){
+    loadNote = (scored - marked) + ' of ' + scored + ' sets unmarked. Not computed.';
+  } else {
+    load = Math.round((rpeSum / marked) * durationMin);
+    loadNote = 'Mean set RPE x ' + Math.round(durationMin) + ' min, arbitrary units. ' +
+               'Adapted from Foster session-RPE.';
+  }
+
+  /* provenance (§9) */
+  var confidence = 'measured', prov;
+  if(!scored){
+    confidence = 'none';
+    prov = 'Nothing logged yet.';
+  } else if(complete === null){
+    confidence = 'projected';
+    prov = scored + ' sets scored. No plan supplied, so completeness is unknown and ' +
+           'the session is not ranked.';
+  } else if(complete === false){
+    confidence = 'projected';
+    prov = scored + ' of ' + setsPlanned + ' sets. Partial session, not ranked against past sessions.';
+  } else {
+    prov = scored + ' of ' + setsPlanned + ' sets logged.' +
+           (marked < scored ? ' ' + (scored - marked) + ' unmarked.' : '') +
+           (bestScore == null ? ' No previous complete session to compare.' : '');
+    if(bestScore == null) confidence = 'projected';
+  }
+  if(normalised) prov += ' Per-exercise weighting is on, so this is not comparable with unweighted sessions.';
+
+  return {
+    score: score,
+    raw: raw,
+    breakdown: breakdown,
+    best: best,
+    bestScore: bestScore,
+    prevScore: prevScore,
+    delta: (prevScore == null) ? null : score - prevScore,
+    complete: complete,
+    setsLogged: scored,
+    setsPlanned: setsPlanned,
+    setsMarked: marked,
+    load: load,
+    loadNote: loadNote,
+    normalised: normalised,
+    confidence: confidence,
+    provenance: prov
+  };
+}
+
+/* ------------------------------------------------------------ stop helpers */
+function cleanStops(stops){
+  var out = [], i, v;
+  if(!Array.isArray(stops)) return out;
+  for(i = 0; i < stops.length; i++){
+    v = +stops[i];
+    if(isFinite(v) && v > 0 && out.indexOf(v) === -1) out.push(v);
+  }
+  return out.sort(function(a, b){ return a - b; });
+}
+function idxOf(stops, w){
+  var bi = 0, i;
+  for(i = 1; i < stops.length; i++){
+    if(Math.abs(stops[i] - w) < Math.abs(stops[bi] - w)) bi = i;
+  }
+  return bi;
+}
+function snapTo(stops, w){ return stops.length ? stops[idxOf(stops, w)] : null; }
+function step(stops, w, d){
+  if(!stops.length) return null;
+  var i = idxOf(stops, w) + d;
+  return stops[Math.min(stops.length - 1, Math.max(0, i))];
+}
+/* size of the next jump up, as a fraction of the current load */
+function jumpPct(stops, w){
+  var up = step(stops, w, 1);
+  if(up == null || up <= w) return 0;
+  return (up - w) / w;
+}
+var BAND_SMALL = 0.08;   /* inside NSCA 2-5% upper / 5-10% lower guidance */
+var BAND_MID   = 0.15;
+
+/* ------------------------------------------------------- history shaping */
+function normHistory(history){
+  var out = [], i;
+  if(!history) return out;
+  if(!Array.isArray(history)) history = history.sessions || [];
+  if(!Array.isArray(history) || !history.length) return out;
+  if(history[0] && history[0].ex !== undefined && !history[0].entries){
+    /* a flat array of entries — bucket by date, else one bucket */
+    var buckets = {}, keys = [];
+    for(i = 0; i < history.length; i++){
+      var e = history[i], key = e.date || e.sessionId || 'all';
+      if(!buckets[key]){ buckets[key] = {date:key, entries:[]}; keys.push(key); }
+      buckets[key].entries.push(e);
+    }
+    for(i = 0; i < keys.length; i++) out.push(buckets[keys[i]]);
+    return out;
+  }
+  for(i = 0; i < history.length; i++){
+    if(history[i] && Array.isArray(history[i].entries)) out.push(history[i]);
+  }
+  return out;
+}
+
+/* Grade one past session for one exercise.
+   Only the sets at the SETTLED weight (the weight of the last logged set) are
+   graded — if he dropped the dumbbell mid-session, the heavier sets before the
+   drop do not count as evidence for the lighter load. */
+function grade(sess, ex, unit){
+  var need = Math.max(1, n(ex.sets) * (ex.perSide ? 2 : 1));
+  var target = Math.max(1, n(ex.reps) || 10);
+  var su = sess.unit || unit || 'lb';
+  var all = [], i;
+  for(i = 0; i < sess.entries.length; i++){
+    var e = sess.entries[i];
+    if(!e || e.ex !== ex.id || e.skipped) continue;
+    if(!(n(e.weight) > 0) || !(n(e.reps) > 0)) continue;
+    all.push({w:conv(n(e.weight), su, unit || 'lb'), reps:Math.round(n(e.reps)),
+              side:e.side || null, set:n(e.set), d:entryDiff(e), target:n(e.target) || target});
+  }
+  if(!all.length) return null;
+
+  var settled = all[all.length - 1].w;
+  var distinct = [];
+  for(i = 0; i < all.length; i++){ if(!distinct.some(function(x){ return eq(x, all[i].w); })) distinct.push(all[i].w); }
+  var mixed = distinct.length > 1;
+  var dropped = mixed && distinct.some(function(x){ return x > settled + 1e-6; });
+
+  var rows = all.filter(function(r){ return eq(r.w, settled); });
+
+  var g = {
+    date: sess.date || null,
+    weight: settled, mixed: mixed, dropped: dropped,
+    target: target, need: need,
+    n: rows.length, complete: rows.length >= need,
+    minReps: Infinity, maxReps: 0, lastSetReps: rows[rows.length - 1].reps,
+    marks: {clean:0, hard:0, max:0, unmarked:0},
+    sides: {L:{min:Infinity, n:0}, R:{min:Infinity, n:0}},
+    rows: rows
+  };
+  for(i = 0; i < rows.length; i++){
+    var r = rows[i];
+    if(r.reps < g.minReps) g.minReps = r.reps;
+    if(r.reps > g.maxReps) g.maxReps = r.reps;
+    if(r.d) g.marks[r.d]++; else g.marks.unmarked++;
+    if(r.side === 'L' || r.side === 'R'){
+      var s = g.sides[r.side];
+      s.n++;
+      if(r.reps < s.min) s.min = r.reps;
+    }
+  }
+  if(g.minReps === Infinity) g.minReps = 0;
+  g.allAtTarget = g.minReps >= target;
+  g.allSurplus  = g.minReps >= target + REP_SURPLUS;
+  g.anyShort    = g.minReps < target;
+  g.worstDeficit = Math.max(0, target - g.minReps);
+  g.sideGap = (g.sides.L.n && g.sides.R.n)
+    ? Math.abs((g.sides.L.min === Infinity ? 0 : g.sides.L.min) - (g.sides.R.min === Infinity ? 0 : g.sides.R.min))
+    : 0;
+  g.weakSide = (!g.sides.L.n || !g.sides.R.n) ? null
+             : (g.sides.L.min < g.sides.R.min ? 'L' : (g.sides.R.min < g.sides.L.min ? 'R' : null));
+  return g;
+}
+
+/* Does this session clear the bar for the next stop up? Bar scales with the
+   jump. A "Max" mark blocks a jump for anything but the smallest gaps —
+   difficulty cannot force a drop, but it can veto an increase. */
+function qualifies(g, band){
+  if(!g || !g.complete || g.dropped) return false;
+  if(band === 'small') return g.lastSetReps >= g.target + REP_SURPLUS;   /* NSCA 2-for-2, verbatim */
+  if(band === 'mid')   return g.allAtTarget && g.marks.max === 0;
+  return g.allSurplus && g.marks.max === 0;                              /* big */
+}
+function barText(g, band, unit, up){
+  var t = g.target;
+  if(band === 'small') return 'Clear ' + (t + REP_SURPLUS) + ' on the last set twice to earn ' + wu(up, unit) + '.';
+  if(band === 'mid')   return 'Clear ' + t + ' on every set twice, none at the limit, to earn ' + wu(up, unit) + '.';
+  return 'Clear ' + (t + REP_SURPLUS) + ' on every set twice to earn ' + wu(up, unit) +
+         ' — that jump is ' + Math.round(jumpPctOf(g, up) * 100) + ' percent.';
+}
+function jumpPctOf(g, up){ return (up - g.weight) / g.weight; }
+
+/* --------------------------------------------------------- next session's weight */
+/* nextWeight({history, exercise, stops, unit})
+     history  : past sessions, oldest first (S.sessions). The session in
+                progress must NOT be included — today does not grade itself.
+     exercise : {id, name, sets, reps, perSide, start}
+     stops    : the real hardware stops. The return is always one of them.
+   -> {weight, reason, confidence:'measured'|'projected'|'none', provenance, ...} */
+function nextWeight(arg){
+  arg = arg || {};
+  var ex    = arg.exercise || {};
+  var unit  = arg.unit || 'lb';
+  var stops = cleanStops(arg.stops);
+  var sessions = normHistory(arg.history);
+  var target = Math.max(1, n(ex.reps) || 10);
+
+  function out(weight, reason, confidence, prov, extra){
+    var o = {
+      weight: (weight == null) ? null : (stops.length ? snapTo(stops, weight) : weight),
+      reason: reason,
+      confidence: confidence,
+      provenance: prov,
+      exercise: ex.id || null,
+      unit: unit,
+      target: target
+    };
+    if(extra) for(var k in extra){ if(extra.hasOwnProperty(k)) o[k] = extra[k]; }
+    return o;
+  }
+
+  if(!stops.length){
+    return out(null, 'No dumbbell stops configured. Set the hardware first.', 'none',
+               'Refused: with no stop list any weight would be invented.');
+  }
+
+  /* newest first, only sessions that actually trained this exercise */
+  var graded = [], i;
+  for(i = sessions.length - 1; i >= 0 && graded.length < 4; i--){
+    var g = grade(sessions[i], ex, unit);
+    if(g) graded.push(g);
+  }
+
+  /* ---- no history ---- */
+  if(!graded.length){
+    if(ex.start == null){
+      return out(null, 'No history and no start weight. Set one.', 'none',
+                 'Refused: nothing measured and no seed to fall back on.', {firstTime:true});
+    }
+    var seed = snapTo(stops, n(ex.start));
+    return out(seed,
+      'First time. Take the weight you could clear ' + (target + 3) + ' with, then mark every set.',
+      'none',
+      'Seeded from the plan default. Nothing measured yet.',
+      {firstTime:true, repGoal:target});
+  }
+
+  var A = graded[0], B = graded[1] || null;
+  var w    = A.weight;
+  var up   = step(stops, w, 1);
+  var down = step(stops, w, -1);
+  var jp   = jumpPct(stops, w);
+  var band = jp <= BAND_SMALL ? 'small' : (jp <= BAND_MID ? 'mid' : 'big');
+  var atTop = eq(up, w), atBottom = eq(down, w);
+
+  /* provenance shared by every branch below */
+  var provBits = [graded.length + ' session' + (graded.length === 1 ? '' : 's') + ' on record',
+                  A.n + ' of ' + A.need + ' sets last time'];
+  if(A.marks.unmarked) provBits.push(A.marks.unmarked + ' unmarked');
+  if(A.mixed) provBits.push('weight changed mid-session');
+  var prov = provBits.join(', ') + '.';
+
+  var conf = 'measured';
+  if(graded.length < 2 || !A.complete || A.mixed) conf = 'projected';
+  if(A.marks.unmarked > 0 && conf === 'measured') conf = 'projected';
+
+  /* asymmetry is reported, never prescribed around — one dumbbell, one weight */
+  var asym = null;
+  if(ex.perSide && A.sideGap >= 2){
+    asym = {gapReps: A.sideGap, weak: A.weakSide,
+            note: (A.weakSide || '?') + ' side is ' + A.sideGap + ' reps behind at the same weight.'};
+  }
+  var extra = {jumpPct:jp, band:band, lastWeight:w, lastReps:A.rows.map(function(r){ return r.reps; })};
+  if(asym) extra.asymmetry = asym;
+
+  /* the weaker side sets the load: both sides share one stop, so the load is
+     too heavy for the session if either side cannot hold target */
+
+  /* ---- first session at this stop: grace. The jump costs reps by design. ---- */
+  var postJump = !!(B && B.weight < w - 1e-6);
+
+  /* ---- 1. floor breach: three or more reps under target on some set ---- */
+  if(A.worstDeficit >= 3){
+    if(postJump){
+      return out(w, 'New weight last session, reps down as expected. Hold ' + wu(w, unit) + '.',
+                 conf, prov + ' First session at this stop, so the shortfall is not counted against it.',
+                 mix(extra, {grace:true, repGoal:target}));
+    }
+    if(atBottom){
+      return out(w, 'Lowest stop and still short. Cut a set, not the weight.', conf,
+                 prov + ' Refused to go below the hardware.', mix(extra, {floor:true}));
+    }
+    return out(down, 'Best set was ' + A.minReps + ' of ' + target + '. Down to ' + wu(down, unit) + '.',
+               conf, prov, extra);
+  }
+
+  /* ---- 2. short AND at the limit on two or more sets ---- */
+  if(A.anyShort && A.marks.max >= 2){
+    if(postJump){
+      return out(w, 'New weight, two sets at the limit. Hold ' + wu(w, unit) + ' and rebuild the reps.',
+                 conf, prov + ' First session at this stop.', mix(extra, {grace:true, repGoal:target}));
+    }
+    if(atBottom){
+      return out(w, 'Lowest stop. Cut a set, not the weight.', conf,
+                 prov + ' Refused to go below the hardware.', mix(extra, {floor:true}));
+    }
+    return out(down, 'Short of target with two sets at the limit. Down to ' + wu(down, unit) + '.',
+               conf, prov, extra);
+  }
+
+  /* ---- 3. short anywhere: hold ---- */
+  if(A.anyShort){
+    return out(w, 'Best set was ' + A.minReps + ' of ' + target + '. Repeat ' + wu(w, unit) + '.',
+               conf, prov, mix(extra, {repGoal:target}));
+  }
+
+  /* ---- 4. dropped or mixed weight mid-session: hold the settled weight ---- */
+  if(A.dropped || A.mixed){
+    return out(w, 'Weight moved mid-session. Repeat ' + wu(w, unit) + ' clean first.',
+               'projected', prov, mix(extra, {repGoal:target}));
+  }
+
+  /* ---- 5. incomplete: hold ---- */
+  if(!A.complete){
+    return out(w, 'Only ' + A.n + ' of ' + A.need + ' sets logged. Repeat ' + wu(w, unit) + '.',
+               'projected', prov, mix(extra, {repGoal:target}));
+  }
+
+  /* ---- 6. calibration escape: the seed was plainly too light ---- */
+  /* The only place this module moves more than one stop, and only from a
+     single session, because holding a badly-seeded weight for three sessions
+     wastes more than a fast jump risks. Flagged projected, never measured. */
+  if(!atTop && A.minReps >= target + 8 && A.marks.max === 0){
+    var two = step(stops, w, 2);
+    return out(two, 'Every set cleared ' + A.minReps + '. Straight to ' + wu(two, unit) + '.',
+               'projected',
+               prov + ' Single-session calibration jump, two stops. Expect the reps to fall.',
+               mix(extra, {calibration:true, stopsMoved:2}));
+  }
+  if(!atTop && A.minReps >= target + 4 && A.marks.max === 0){
+    return out(up, 'Every set cleared ' + A.minReps + '. Up to ' + wu(up, unit) + '.',
+               'projected',
+               prov + ' Single-session calibration jump. Expect the reps to fall.',
+               mix(extra, {calibration:true, stopsMoved:1}));
+  }
+
+  /* ---- 7. at the top of the hardware ---- */
+  if(atTop){
+    return out(w, 'Top of the dumbbell. Add reps, not weight.', conf,
+               prov + ' No heavier stop exists.', mix(extra, {ceiling:true, repGoal:target + REP_SURPLUS}));
+  }
+
+  /* ---- 8. the 2-for-2 gate, with the bar scaled to the jump ---- */
+  var qa = qualifies(A, band);
+  var qb = !!(B && eq(B.weight, w) && qualifies(B, band));
+
+  if(qa && qb){
+    return out(up,
+      (band === 'big'
+        ? 'Two sessions at ' + (A.target + REP_SURPLUS) + ' or better. Up to ' + wu(up, unit) + '.'
+        : 'Two clean sessions. Up to ' + wu(up, unit) + '.'),
+      conf,
+      prov + ' Two consecutive qualifying sessions at ' + wu(w, unit) +
+      '; jump is ' + Math.round(jp * 100) + ' percent.',
+      mix(extra, {earned:true, expectRepDrop:true}));
+  }
+  if(qa){
+    return out(w,
+      'Qualified once. One more like that and it goes to ' + wu(up, unit) + '.',
+      conf,
+      prov + ' Needs two consecutive qualifying sessions (2-for-2).',
+      mix(extra, {oneMore:true, repGoal:(band === 'big' ? target + REP_SURPLUS : target)}));
+  }
+  return out(w, barText(A, band, unit, up), conf,
+             prov + ' Jump to ' + wu(up, unit) + ' is ' + Math.round(jp * 100) + ' percent, so the bar is set high.',
+             mix(extra, {repGoal:(band === 'mid' ? target : target + REP_SURPLUS)}));
+}
+
+function mix(a, b){
+  var o = {}, k;
+  for(k in a){ if(a.hasOwnProperty(k)) o[k] = a[k]; }
+  for(k in b){ if(b.hasOwnProperty(k)) o[k] = b[k]; }
+  return o;
+}
+
+/* ------------------------------------------------- within-session adjustment */
+/* withinSession({sets, exercise, stops, unit})
+     sets : this exercise's entries logged SO FAR today, in order.
+   -> {weight, reason, ...} when there is something to say, else null.
+
+   Rules, in order:
+     - Per-side lifts are only judged on a finished PAIR. The dumbbell never
+       changes between the left and right of one set.
+     - The weaker side of the pair drives the call.
+     - Max + short of target -> down one stop.
+     - Two sets at the limit back to back -> down one stop.
+     - Max but on target -> hold, said out loud once. This is the direct answer
+       to "set 1 was really hard, what does set 2 do": it holds. A single Max
+       is a report, not a measurement (see the calibration note), and reps did
+       not actually fall.
+     - Clean and two or more over target on set 1 -> up one stop, but only when
+       the jump is 15 percent or less and only from set 1, so two sets remain
+       to run at the new load.
+     - At most one weight change per exercise per session, and never up after
+       a down. No oscillation mid-workout.
+     - Never below the lowest stop: it refuses and says to cut reps instead. */
+function withinSession(arg){
+  arg = arg || {};
+  var ex    = arg.exercise || {};
+  var unit  = arg.unit || 'lb';
+  var stops = cleanStops(arg.stops);
+  var raw   = Array.isArray(arg.sets) ? arg.sets : [];
+  var target = Math.max(1, n(ex.reps) || 10);
+  var plannedSets = Math.max(1, n(ex.sets) || 3);
+  if(!stops.length) return null;
+
+  var done = [], i;
+  for(i = 0; i < raw.length; i++){
+    var e = raw[i];
+    if(!e || e.skipped) continue;
+    if(!(n(e.weight) > 0) || !(n(e.reps) > 0)) continue;
+    done.push({w:n(e.weight), reps:Math.round(n(e.reps)), side:e.side || null,
+               set:n(e.set) || 0, d:entryDiff(e), target:n(e.target) || target});
+  }
+  if(!done.length) return null;
+
+  var last = done[done.length - 1];
+  /* never change the dumbbell between the two sides of one set */
+  if(ex.perSide && last.side === 'L') return null;
+
+  /* the unit just finished: a pair for per-side lifts, a single set otherwise */
+  var unitRows = [last];
+  if(ex.perSide){
+    var prev = done[done.length - 2];
+    if(prev && prev.set === last.set && prev.side === 'L') unitRows = [prev, last];
+  }
+  var w = last.w;
+  var minReps = Math.min.apply(null, unitRows.map(function(r){ return r.reps; }));
+  var worst = null;
+  for(i = 0; i < unitRows.length; i++){
+    var d = unitRows[i].d;
+    if(d && (worst == null || DIFFICULTY.rank[d] > DIFFICULTY.rank[worst])) worst = d;
+  }
+
+  /* sets already finished, and how many remain */
+  var setNums = [];
+  for(i = 0; i < done.length; i++){ if(setNums.indexOf(done[i].set) === -1) setNums.push(done[i].set); }
+  var setsFinished = ex.perSide
+    ? setNums.filter(function(s){
+        var c = 0;
+        for(var j = 0; j < done.length; j++) if(done[j].set === s) c++;
+        return c >= 2;
+      }).length
+    : setNums.length;
+  var remaining = plannedSets - setsFinished;
+  if(remaining <= 0) return null;
+
+  /* one change per exercise per session; never up after a down */
+  var weights = [];
+  for(i = 0; i < done.length; i++){ if(!weights.some(function(x){ return eq(x, done[i].w); })) weights.push(done[i].w); }
+  var changed = weights.length > 1;
+  var wentDown = changed && weights[weights.length - 1] < weights[0] - 1e-6;
+
+  var up   = step(stops, w, 1);
+  var down = step(stops, w, -1);
+  var atBottom = eq(down, w);
+  var jp = jumpPct(stops, w);
+
+  function res(weight, reason, extra){
+    return mix({weight:snapTo(stops, weight), reason:reason, exercise:ex.id || null,
+                unit:unit, setsRemaining:remaining,
+                provenance:'From set ' + last.set + ' of this session, measured now.',
+                confidence:'measured'}, extra || {});
+  }
+
+  /* down: at the limit and short */
+  if(worst === 'max' && minReps < target){
+    if(atBottom){
+      return res(w, 'Lowest stop. Cut the reps, not the weight.', {floor:true, confidence:'measured'});
+    }
+    if(changed){
+      return res(w, 'Already moved once. Hold ' + wu(w, unit) + ' for the rest.', {held:true});
+    }
+    return res(down, 'Short at the limit. Drop to ' + wu(down, unit) + '.', {direction:'down'});
+  }
+
+  /* down: two units at the limit back to back */
+  var prevUnitMax = false;
+  if(unitRows.length === 2 && unitRows[0].d === 'max' && unitRows[1].d === 'max') prevUnitMax = true;
+  if(!ex.perSide && done.length >= 2 && done[done.length - 2].d === 'max' && worst === 'max') prevUnitMax = true;
+  if(prevUnitMax && !changed && !atBottom){
+    return res(down, 'Two at the limit. Drop to ' + wu(down, unit) + ' for the rest.', {direction:'down'});
+  }
+
+  /* hold: at the limit but on target — the answer to "set 1 was really hard" */
+  if(worst === 'max'){
+    return res(w, 'At the limit but on target. Hold ' + wu(w, unit) + '.', {held:true});
+  }
+
+  /* up: clean and well over, from set 1 only, small jumps only */
+  if(worst === 'clean' && minReps >= target + REP_SURPLUS &&
+     setsFinished === 1 && remaining >= 2 && !changed && !wentDown &&
+     jp > 0 && jp <= BAND_MID && !eq(up, w)){
+    return res(up, 'Clean at ' + minReps + '. Try ' + wu(up, unit) + ' for the rest.',
+               {direction:'up', expectRepDrop:true});
+  }
+
+  return null;
+}
+
+/* -------------------------------------------------------------------- export */
+window.SCORE = {
+  setScore: setScore,
+  sessionScore: sessionScore,
+  e1rm: e1rm,
+  nextWeight: nextWeight,
+  withinSession: withinSession,
+  DIFFICULTY: DIFFICULTY,
+  normDiff: normDiff,
+  REP_SURPLUS: REP_SURPLUS,
+  FORMULA: 'Wathan 1994: e1RM = 100w / (48.8 + 53.8 * e^(-0.075r)). ' +
+           'Estimated, not measured. +/-5 percent at 2-10 reps, wider above.'
+};
+
+})();
+
+/* ============================================================================
+   RESEARCH SUMMARY — 10 lines
+   1. Compared for the score: volume load, e1RM formulas, INOL, Wilks/DOTS, Foster session-RPE.
+   2. Volume load out: 5 lb x 30 reps ties 30 lb x 5, documented to over-reward light high-rep work.
+   3. INOL out: needs a tested 1RM per lift we do not have, and rising INOL is a fatigue warning, not a win.
+   4. Wilks/DOTS out: built to compare different lifters on a barbell total; here a near-constant divisor that would rise if he lost weight.
+   5. Session-RPE out as the headline (measures cost, so an easier session scores lower), kept as a separate `load` field.
+   6. Compared for e1RM: Epley, Brzycki, Lombardi, Wathan, Mayhew, O'Conner. Chose WATHAN.
+   7. Why: LeSuer et al. 1997 (JSCR 11:211-213) found it the only equation not underestimating the squat and among the best on bench; its exponential form stays stable at 12-20 reps where Brzycki degrades and Epley diverges. Error +/-5 percent at 2-10 reps, +/-10-15 percent above, and never validated on dumbbell accessories.
+   8. Score = e1RM x reps, reps credited only to target+2 (the NSCA 2-for-2 threshold), summed, /100. Linear in load so weight always pays; flat past target+2 so junk reps cannot.
+   9. Autoregulation from Zourdos et al. 2016 and Helms et al. 2016 (RIR-based RPE: clean=RPE 7/3 RIR, hard=RPE 8.5/1-2 RIR, max=RPE 9.75/0 RIR), gated by double progression and the NSCA 2-for-2 rule.
+  10. Marks are advisory only: Steele et al. 2017 found novices underpredict reps to failure by 4-5 reps, so measured reps decide load and a mark can veto an increase but never force a decrease on its own.
+   ============================================================================ */
+
 
 </script>
 <script>
@@ -1581,6 +3183,1564 @@ window.CORE={
 
 </script>
 <script>
+
+/* ============================================================================
+   11 — CARDIO / TREADMILL
+
+   window.initCardio({mount, getBodyMassLb, onLog, initial})
+     -> { render(sessions), value(), destroy() }
+
+   THE MODEL — ACSM metabolic equations, gross VO2 in mL/kg/min, speed in m/min,
+   grade as a fraction:
+
+     walk   VO2 = 0.1 x S  + 1.8 x S x G + 3.5      valid 1.9-3.7 mph (50-100 m/min)
+     run    VO2 = 0.2 x S  + 0.9 x S x G + 3.5      valid  >5.0 mph  (>134 m/min)
+
+   Both were validated to a 15% grade, on steady-state work, hands off the rails.
+   Between 3.7 and 5.0 mph NEITHER equation is anchored. That gap is real and
+   this module refuses to hide it: no single figure is produced there, only the
+   bracket the two equations span, flagged UNVALIDATED (§9, refuse rather than
+   guess). The entry logged in that state carries kcal:null on purpose — see
+   INTEGRATOR NOTE at the bottom.
+
+   NET vs GROSS — the headline figure is NET (gross minus the 3.5 mL/kg/min
+   resting term). The user's cardio exists to lift his intake target from ~1950
+   to ~2150 kcal, and any intake target already contains the calories he burns
+   simply existing during those minutes. Adding a GROSS figure to it counts the
+   resting portion twice. Gross is still shown, labelled, because it is what a
+   console reports and it is the only fair basis for the console comparison.
+
+   Energy conversion: 5 kcal per litre of O2.
+   ========================================================================= */
+(function(){
+'use strict';
+
+/* ------------------------------------------------------------- constants */
+var MPH_TO_M_MIN = 26.8224;      /* 1 mph = 1609.344 m / 60 min */
+var LB_TO_KG     = 0.45359237;
+var KCAL_PER_L   = 5;            /* kcal per litre of O2 */
+var REST_VO2     = 3.5;          /* 1 MET, mL/kg/min — the resting term */
+
+var WALK_LO = 1.9, WALK_HI = 3.7;   /* ACSM walking anchor  */
+var RUN_LO  = 5.0;                  /* ACSM running anchor  */
+var GRADE_MAX = 15;                 /* both validated to 15% */
+var AXIS = 8.0;                     /* speed strip runs 0 - 8 mph */
+var CON_LO = 1.15, CON_HI = 1.20;   /* typical console overread */
+
+var LIM = {
+  mph    :{min:0,   max:12,  step:0.1, dp:1},
+  grade  :{min:0,   max:30,  step:0.5, dp:1},
+  minutes:{min:1,   max:240, step:1,   dp:0}
+};
+
+var SHELL =
+'<section class="pn cd cd-init" id="p-cardio" data-cd-root aria-labelledby="cd-title">'+
+  '<div class="pn-hd">'+
+    '<span class="lbl" id="cd-title">Treadmill</span>'+
+    '<span class="lbl" data-cd-mass>&mdash;</span>'+
+  '</div>'+
+  '<div class="pn-bd">'+
+    '<div class="cd-read">'+
+      '<div class="cd-val">'+
+        '<span class="lbl">Net energy cost</span>'+
+        '<div class="cd-numwrap">'+
+          '<span class="cd-num tnum" data-cd-kcal>&mdash;</span>'+
+          '<span class="cd-unit">kcal</span>'+
+        '</div>'+
+      '</div>'+
+      '<span class="cd-flag" data-cd-flag data-t="none">&mdash;</span>'+
+    '</div>'+
+    '<p class="cd-sub" data-cd-sub>&mdash;</p>'+
+    '<div class="cd-gauges" data-cd-gauges></div>'+
+    '<p class="cd-note" data-cd-console>&mdash;</p>'+
+    '<div class="cd-caveats" data-cd-caveats></div>'+
+    '<p class="cd-method" data-cd-method>&mdash;</p>'+
+    '<hr class="sep">'+
+    '<div class="cd-model">'+
+      '<span class="lbl">Speed model</span>'+
+      '<div class="cd-strip inset" data-cd-strip role="img" aria-label="Speed against each equation\'s validated range"></div>'+
+      '<div class="cd-ticks" data-cd-ticks aria-hidden="true"></div>'+
+      '<div class="cd-labs" data-cd-labs aria-hidden="true"></div>'+
+      '<div class="cd-zones" data-cd-zones aria-hidden="true"></div>'+
+    '</div>'+
+    '<hr class="sep">'+
+    '<div data-cd-ctl></div>'+
+    '<div class="cd-act">'+
+      '<button class="btn cd-log" type="button" data-cd-log>Log session</button>'+
+      '<span class="cd-sp"></span>'+
+      '<button class="btn" type="button" data-cd-recall>Recall last</button>'+
+    '</div>'+
+  '</div>'+
+  '<div class="pn-hd cd-hd2">'+
+    '<span class="lbl">Cardio log</span>'+
+    '<span class="lbl" data-cd-count>&mdash;</span>'+
+  '</div>'+
+  '<div class="pn-bd" data-cd-hist></div>'+
+'</section>';
+
+/* ---------------------------------------------------------------- helpers */
+function el(t,c,x){ var n=document.createElement(t); if(c)n.className=c; if(x!=null)n.textContent=x; return n; }
+function clamp(v,a,b){ return v<a?a:(v>b?b:v); }
+function round(v,dp){ var f=Math.pow(10,dp); return Math.round(v*f)/f; }
+function ki(v){ return Math.round(v).toLocaleString(); }
+function span(a,b){ a=Math.round(a); b=Math.round(b); return a===b?ki(a):(ki(a)+'–'+ki(b)); }
+var DASH='—';
+
+function fmtDate(ts){
+  var d=new Date(ts);
+  if(isNaN(d.getTime())) return DASH;
+  return d.toLocaleDateString(undefined,{weekday:'short',day:'numeric',month:'short'});
+}
+
+/* ---------------------------------------------------------------- the model */
+function modelFor(mph){
+  if(mph >= RUN_LO)  return 'run';
+  if(mph >  WALK_HI) return 'unvalidated';   /* 3.7 - 5.0: neither is anchored */
+  return 'walk';                             /* below 1.9 is flagged separately */
+}
+
+/* gross VO2, mL/kg/min */
+function vo2Gross(model, mph, gradePct){
+  var s = mph * MPH_TO_M_MIN, g = gradePct/100;
+  return model === 'run'
+    ? (0.2*s + 0.9*s*g + REST_VO2)
+    : (0.1*s + 1.8*s*g + REST_VO2);
+}
+/* mL/kg/min -> kcal over the bout, at 5 kcal per litre of O2 */
+function kcalOf(vo2, kg, minutes){ return vo2 * kg / 1000 * KCAL_PER_L * minutes; }
+
+function compute(f, massLb){
+  var o = {mph:f.mph, grade:f.grade, minutes:f.minutes, massLb:massLb,
+           model:modelFor(f.mph), caveats:[], ok:false,
+           net:null, gross:null, mets:null,
+           netLo:null, netHi:null, grossLo:null, grossHi:null,
+           consoleKcal:null, consoleLo:null, consoleHi:null,
+           distance:f.mph * f.minutes / 60};
+
+  if(massLb == null){ o.reason='mass'; return o; }
+  var kg = massLb * LB_TO_KG;
+  o.ok = true;
+
+  if(o.model === 'unvalidated'){
+    /* Do not pick. Report what each equation says and label the span. Which of
+       the two is higher flips with grade, so take min/max rather than assume. */
+    var gw = vo2Gross('walk', f.mph, f.grade), gr = vo2Gross('run', f.mph, f.grade);
+    var lo = Math.min(gw,gr), hi = Math.max(gw,gr);
+    o.grossLo = kcalOf(lo, kg, f.minutes);
+    o.grossHi = kcalOf(hi, kg, f.minutes);
+    o.netLo   = kcalOf(lo - REST_VO2, kg, f.minutes);
+    o.netHi   = kcalOf(hi - REST_VO2, kg, f.minutes);
+    o.metsLo  = lo/REST_VO2; o.metsHi = hi/REST_VO2;
+    o.consoleLo = o.grossLo*CON_LO;
+    o.consoleHi = o.grossHi*CON_HI;
+  }else{
+    var g = vo2Gross(o.model, f.mph, f.grade);
+    o.gross = kcalOf(g, kg, f.minutes);
+    o.net   = kcalOf(g - REST_VO2, kg, f.minutes);
+    o.mets  = g/REST_VO2;
+    o.netLo = o.netHi = o.net;
+    o.grossLo = o.grossHi = o.gross;
+    o.consoleLo = o.gross*CON_LO;
+    o.consoleHi = o.gross*CON_HI;
+  }
+  o.consoleKcal = Math.round((o.consoleLo + o.consoleHi)/2);
+
+  /* §9 — every limit that applies is stated, and the absence of a line is
+     itself information. Errors name the mechanism and the fix. */
+  if(o.model === 'unvalidated'){
+    o.caveats.push({t:'stop', s:'Neither ACSM equation covers '+WALK_HI+'–'+RUN_LO.toFixed(1)+
+      ' mph. Walking is anchored to 1.9–3.7 mph, running to 5.0 mph and above. '+
+      'The bracket is the span between the two equations at this speed — no single value is defensible here. '+
+      'Set 3.7 or 5.0 for a figure inside a validated range.'});
+  }
+  if(f.mph > 0 && f.mph < WALK_LO){
+    o.caveats.push({t:'warn', s:'Below 1.9 mph the walking equation is outside its anchored range and reads high.'});
+  }
+  if(f.grade > GRADE_MAX){
+    o.caveats.push({t:'warn', s:'Both equations were validated to a 15% grade. At '+round(f.grade,1)+'% this is extrapolated.'});
+  }
+  if(f.minutes < 5){
+    o.caveats.push({t:'warn', s:'Under five minutes the bout is mostly the transient before steady state, which this model does not describe.'});
+  }
+  return o;
+}
+
+/* ------------------------------------------------------------------- main */
+function initCardio(opts){
+  opts = opts || {};
+  var mount = opts.mount;
+  if(!mount || !mount.appendChild) throw new Error('initCardio: mount element required');
+  var onLog = typeof opts.onLog === 'function' ? opts.onLog : null;
+  var getMass = opts.getBodyMassLb;
+
+  /* --- adopt the dropped-in markup, or build it --- */
+  var root = null;
+  if(mount.matches && mount.matches('[data-cd-root]')) root = mount;
+  if(!root) root = mount.querySelector ? mount.querySelector('[data-cd-root]') : null;
+  if(!root){ mount.innerHTML = SHELL; root = mount.querySelector('[data-cd-root]'); }
+  var q = function(s){ return root.querySelector(s); };
+
+  var uid = 'cd' + Math.random().toString(36).slice(2,8);
+  var offs = [];                                   /* teardown list */
+  function on(node, ev, fn, o){ node.addEventListener(ev, fn, o); offs.push([node,ev,fn,o]); }
+
+  /* --- form state --- */
+  var ini = opts.initial || {};
+  var form = {
+    mph:     norm('mph',     ini.mph,     3.0),
+    grade:   norm('grade',   ini.grade,   0),
+    minutes: norm('minutes', ini.minutes, 20)
+  };
+  function norm(k, v, dflt){
+    var L=LIM[k]; v=Number(v);
+    if(!isFinite(v)) v=dflt;
+    return round(clamp(v,L.min,L.max), L.dp);
+  }
+
+  var sessions = [];
+  var histCap  = 6;
+
+  /* ---------------------------------------------------- gauge cluster build */
+  var gWrap = q('[data-cd-gauges]');
+  var GAUGES = [['gross','Gross'],['console','Console'],['dist','Distance']];
+  gWrap.textContent = '';
+  GAUGES.forEach(function(p){
+    var c = el('div','cd-g'); c.dataset.k = p[0];
+    c.appendChild(el('span','lbl',p[1]));
+    c.appendChild(el('b',null,DASH));
+    c.appendChild(el('span','cd-cap',''));
+    gWrap.appendChild(c);
+  });
+  function gauge(k, v, cap, flag){
+    var c = gWrap.querySelector('.cd-g[data-k="'+k+'"]');
+    c.querySelector('b').textContent = v;
+    var capEl = c.querySelector('.cd-cap');
+    capEl.textContent = '';
+    if(cap) capEl.appendChild(document.createTextNode(cap));
+    if(flag){ var f = el('span','cd-fl',flag[0]); f.dataset.t = flag[1]; capEl.appendChild(f); }
+  }
+
+  /* ------------------------------------------------------ speed model strip */
+  var strip = q('[data-cd-strip]'), ticksEl = q('[data-cd-ticks]'),
+      labsEl = q('[data-cd-labs]'), zonesEl = q('[data-cd-zones]');
+  var BANDS = [
+    {z:'dead', a:0,       b:WALK_LO},
+    {z:'walk', a:WALK_LO, b:WALK_HI, name:'Walk'},
+    {z:'gap',  a:WALK_HI, b:RUN_LO,  name:'Gap'},
+    {z:'run',  a:RUN_LO,  b:AXIS,    name:'Run'}
+  ];
+  var pct = function(v){ return (clamp(v,0,AXIS)/AXIS*100); };
+  var bandEls = [], znEls = [], ptr;
+
+  (function buildStrip(){
+    strip.textContent = '';
+    BANDS.forEach(function(b){
+      var n = el('i','cd-band'); n.dataset.z = b.z;
+      n.style.left  = pct(b.a).toFixed(3)+'%';
+      n.style.width = (pct(b.b)-pct(b.a)).toFixed(3)+'%';
+      strip.appendChild(n); bandEls.push(n);
+    });
+    ptr = el('i','cd-ptr raised'); strip.appendChild(ptr);
+
+    ticksEl.textContent = ''; labsEl.textContent = '';
+    var majors = [0, WALK_LO, WALK_HI, RUN_LO, AXIS], i;
+    for(i=0;i<=AXIS;i++){
+      if(majors.indexOf(i)>=0) continue;
+      var t = el('i','cd-tk'); t.style.left = pct(i).toFixed(3)+'%'; ticksEl.appendChild(t);
+    }
+    majors.forEach(function(v){
+      var t = el('i','cd-tk'); t.dataset.m='1'; t.style.left = pct(v).toFixed(3)+'%'; ticksEl.appendChild(t);
+      var L = el('span','cd-lab', v===0?'0':(v===AXIS?String(AXIS):v.toFixed(1)));
+      L.style.left = pct(v).toFixed(3)+'%';
+      if(v===0) L.dataset.e='l'; else if(v===AXIS) L.dataset.e='r';
+      labsEl.appendChild(L);
+    });
+
+    zonesEl.textContent = '';
+    BANDS.forEach(function(b){
+      if(!b.name) return;
+      var d = el('i','cd-zdiv'); d.style.left = pct(b.a).toFixed(3)+'%'; zonesEl.appendChild(d);
+      var s = el('span','lbl cd-zn', b.name);
+      s.style.left = ((pct(b.a)+pct(b.b))/2).toFixed(3)+'%';
+      s.dataset.z = b.z;
+      zonesEl.appendChild(s); znEls.push(s);
+    });
+  })();
+
+  /* a legend that will not fit its own band is dropped rather than overlapped;
+     the band, its divider and the spoken label still carry the information */
+  function fitZones(){
+    var w = strip.clientWidth;
+    if(!w) return;
+    znEls.forEach(function(s){
+      var b = null, i;
+      for(i=0;i<BANDS.length;i++) if(BANDS[i].z === s.dataset.z) b = BANDS[i];
+      if(!b) return;
+      s.hidden = false;
+      var bw = (pct(b.b)-pct(b.a))/100 * w;
+      if(s.offsetWidth + 6 > bw) s.hidden = true;
+    });
+  }
+
+  /* ------------------------------------------------------- control builder */
+  var ctlWrap = q('[data-cd-ctl]');
+  var FIELDS = [
+    {k:'mph',     lab:'Speed',    unit:'mph', hint:'Walk 1.9–3.7 · run 5.0 and up'},
+    {k:'grade',   lab:'Incline',  unit:'%',   hint:'Validated to 15%'},
+    {k:'minutes', lab:'Duration', unit:'min', hint:'At a steady pace'}
+  ];
+  var inputs = {}, stepBtns = [];
+  ctlWrap.textContent = '';
+  FIELDS.forEach(function(F){
+    var L = LIM[F.k], id = uid+'-'+F.k;
+    var row = el('div','cd-row');
+
+    var lw = el('div','cd-rl');
+    var lb = el('label','lbl',F.lab); lb.setAttribute('for',id);
+    lw.appendChild(lb); lw.appendChild(el('span','cd-hint',F.hint));
+
+    var bDn = el('button','btn cd-step','−'); bDn.type='button';
+    bDn.setAttribute('aria-label', F.lab+' down');
+    var bUp = el('button','btn cd-step','+'); bUp.type='button';
+    bUp.setAttribute('aria-label', F.lab+' up');
+
+    var fld = el('span','cd-field');
+    var inp = document.createElement('input');
+    inp.className='cd-in tnum'; inp.type='number'; inp.id=id;
+    inp.inputMode = L.dp ? 'decimal' : 'numeric';
+    inp.min=String(L.min); inp.max=String(L.max); inp.step=String(L.step);
+    inp.value = form[F.k].toFixed(L.dp);
+    fld.appendChild(inp); fld.appendChild(el('span','cd-u',F.unit));
+
+    row.appendChild(lw); row.appendChild(bDn); row.appendChild(fld); row.appendChild(bUp);
+    ctlWrap.appendChild(row);
+    inputs[F.k] = inp;
+
+    bindStep(bDn, F.k, -1); bindStep(bUp, F.k, +1);
+    stepBtns.push([F.k, bDn, -1], [F.k, bUp, +1]);
+
+    on(inp,'input', function(){
+      var v = Number(inp.value);
+      if(inp.value === '' || !isFinite(v)) return;      /* mid-typing: leave it alone */
+      form[F.k] = round(clamp(v, L.min, L.max), L.dp);
+      queue();
+    });
+    on(inp,'change', function(){ writeField(F.k); });
+    on(inp,'blur',   function(){ writeField(F.k); });
+  });
+
+  function writeField(k){
+    var L=LIM[k], inp=inputs[k], v=Number(inp.value);
+    if(inp.value === '' || !isFinite(v)) v = form[k];   /* refuse a junk value, keep the last good one */
+    form[k] = round(clamp(v, L.min, L.max), L.dp);
+    inp.value = form[k].toFixed(L.dp);
+    queue();
+  }
+  function bump(k, dir){
+    var L=LIM[k];
+    form[k] = round(clamp(form[k] + dir*L.step, L.min, L.max), L.dp);
+    inputs[k].value = form[k].toFixed(L.dp);
+    queue();
+  }
+
+  /* press and hold repeats, so 20 -> 45 min is one gesture rather than 25 taps.
+     The discrete step comes from click (so the keyboard works); a hold swallows
+     the click it would otherwise produce on release. */
+  function bindStep(btn, k, dir){
+    var t=null, iv=null, n=0, swallow=false;
+    function step(){ bump(k,dir); }
+    function stop(){ clearTimeout(t); clearInterval(iv); t=null; iv=null; n=0; }
+    function down(e){
+      if(e.button !== undefined && e.button !== 0) return;
+      if(btn.disabled) return;
+      stop();
+      t = setTimeout(function(){
+        swallow = true; step();
+        iv = setInterval(function(){
+          n++; step();
+          if(n === 8){ clearInterval(iv); iv = setInterval(step, 50); }
+        }, 110);
+      }, 420);
+    }
+    on(btn,'pointerdown',down);
+    ['pointerup','pointercancel','pointerleave'].forEach(function(ev){ on(btn,ev,stop); });
+    on(window,'blur',stop);
+    on(btn,'click', function(){ if(swallow){ swallow=false; return; } step(); });
+    btn._cdStop = stop;
+  }
+
+  /* ---------------------------------------------------------------- paint */
+  var kcalEl=q('[data-cd-kcal]'), flagEl=q('[data-cd-flag]'), subEl=q('[data-cd-sub]'),
+      conEl=q('[data-cd-console]'), cvEl=q('[data-cd-caveats]'), mtEl=q('[data-cd-method]'),
+      massEl=q('[data-cd-mass]'), logBtn=q('[data-cd-log]'), recallBtn=q('[data-cd-recall]'),
+      histEl=q('[data-cd-hist]'), countEl=q('[data-cd-count]');
+
+  var last = null;
+
+  function mass(){
+    var v=null;
+    try{ v = (typeof getMass === 'function') ? Number(getMass()) : Number(getMass); }catch(e){ v=null; }
+    if(!isFinite(v) || v <= 0 || v > 1000) return null;   /* §9 refuse rather than guess */
+    return v;
+  }
+
+  function paint(){
+    var m = mass();
+    var c = compute(form, m);
+    last = c;
+
+    massEl.textContent = m == null ? 'body mass not set' : (round(m,0)+' lb · from settings');
+
+    /* --- headline: NET, because it is added to an intake target that already
+           contains the resting portion of these minutes --- */
+    if(!c.ok){
+      kcalEl.textContent = DASH; kcalEl.dataset.void='1'; kcalEl.dataset.w='0';
+      flagEl.textContent = 'no body mass'; flagEl.dataset.t = 'unval';
+      subEl.textContent = 'The equation is per kilogram of body mass. Set Body lb under Bell & plan and this reads.';
+    }else if(c.model === 'unvalidated'){
+      var txt = span(c.netLo, c.netHi);
+      kcalEl.textContent = txt; kcalEl.dataset.void='0'; kcalEl.dataset.w = txt.length>4?'1':'0';
+      flagEl.textContent = 'unvalidated'; flagEl.dataset.t = 'unval';
+      subEl.textContent = 'Above resting metabolism · no validated equation at '+form.mph.toFixed(1)+
+        ' mph · '+c.metsLo.toFixed(1)+'–'+c.metsHi.toFixed(1)+' MET';
+    }else{
+      var s = ki(c.net);
+      kcalEl.textContent = s; kcalEl.dataset.void='0'; kcalEl.dataset.w = s.length>4?'1':'0';
+      flagEl.textContent = 'estimated'; flagEl.dataset.t = 'est';
+      subEl.textContent = 'Above resting metabolism · ACSM '+(c.model==='run'?'running':'walking')+
+        ' equation · '+c.mets.toFixed(1)+' MET';
+    }
+
+    /* --- gauges --- */
+    if(!c.ok){
+      gauge('gross', DASH, 'kcal', null);
+      gauge('console', DASH, 'typical readout', null);
+    }else{
+      var tier = c.model === 'unvalidated' ? ['unvalidated','unval'] : ['estimated','est'];
+      gauge('gross',   span(c.grossLo, c.grossHi),     'kcal · resting included', tier);
+      gauge('console', span(c.consoleLo, c.consoleHi), 'kcal · typical readout',  tier);
+    }
+    gauge('dist', c.distance.toFixed(2), 'mi · speed × time', ['from input','raw']);
+
+    /* --- the console gap, which is the specific thing he was warned about --- */
+    if(!c.ok){
+      conEl.textContent = '';
+      conEl.hidden = true;
+    }else{
+      conEl.hidden = false;
+      if(c.model === 'unvalidated'){
+        conEl.textContent = 'A treadmill console would typically read '+span(c.consoleLo,c.consoleHi)+
+          ' kcal for this. Consoles report gross energy and run 15–20% high, and the figure above is net of resting, '+
+          'so the two are not measuring the same thing.';
+      }else{
+        conEl.textContent = 'A treadmill console would typically read '+span(c.consoleLo,c.consoleHi)+
+          ' kcal for this — '+span(c.consoleLo-c.net, c.consoleHi-c.net)+
+          ' more than the figure above. Consoles report gross energy and run 15–20% high.';
+      }
+    }
+
+    /* --- caveats: present only when something is actually off --- */
+    cvEl.textContent = '';
+    c.caveats.forEach(function(v){
+      var n = el('p','cd-cv', v.s); n.dataset.t = v.t; cvEl.appendChild(n);
+    });
+
+    mtEl.textContent = 'ACSM walking and running equations, VO2 converted at 5 kcal per litre of oxygen. '+
+      'ACSM puts the error near ±7%; validation work finds the walking equation reads higher still, so treat this as ±10–15%. '+
+      'It assumes a steady pace with no hands on the rails — holding them puts the real cost well below this.';
+
+    /* --- strip --- */
+    var live = c.model === 'unvalidated' ? 'gap' : (c.model === 'run' ? 'run' : (form.mph < WALK_LO ? 'dead' : 'walk'));
+    bandEls.forEach(function(n){ n.dataset.on = (n.dataset.z === live) ? '1' : '0'; });
+    znEls.forEach(function(s){ s.dataset.on = (s.dataset.z === live) ? '1' : '0'; });
+    ptr.style.left = pct(form.mph).toFixed(3)+'%';
+    strip.setAttribute('aria-label',
+      form.mph.toFixed(1)+' mph. Walking equation validated 1.9 to 3.7 mph, running above 5.0 mph, '+
+      'neither between. Current speed is '+
+      (live==='walk'?'inside the walking range':live==='run'?'inside the running range':
+       live==='gap'?'in the gap between them':'below the walking range')+'.');
+    fitZones();
+
+    logBtn.disabled = !c.ok;
+    root.classList.remove('cd-init');
+  }
+
+  var queued = false;
+  function queue(){                       /* §6 — one update per frame */
+    if(queued) return; queued = true;
+    requestAnimationFrame(function(){ queued = false; paint(); });
+  }
+
+  /* -------------------------------------------------------------- history */
+  /* Number(null) is 0 and Number('') is 0, so a null kcal would restore as a
+     confident zero. Coerce through this, never through Number() alone. */
+  function n0(v){
+    if(v === null || v === undefined || v === '') return null;
+    v = Number(v);
+    return isFinite(v) ? v : null;
+  }
+  function clean(e){
+    if(!e || typeof e !== 'object') return null;
+    var ts = n0(e.ts); if(ts == null) return null;
+    var mdl = (e.model==='walk'||e.model==='run'||e.model==='unvalidated') ? e.model : null;
+    var o = {
+      ts:ts,
+      minutes: n0(e.minutes),
+      mph:     n0(e.mph),
+      grade:   n0(e.grade),
+      kcal:    n0(e.kcal),
+      kcalLo:  n0(e.kcalLo),
+      kcalHi:  n0(e.kcalHi),
+      consoleKcal: n0(e.consoleKcal)
+    };
+    /* trap 7 — a saved row from a schema that no longer exists must degrade,
+       not render blank, and must never be silently promoted to "validated" */
+    o.model = mdl || (o.mph == null ? 'unvalidated' : modelFor(o.mph));
+    return o;
+  }
+
+  function paintHistory(){
+    histEl.textContent = '';
+    if(!sessions.length){
+      countEl.textContent = 'none yet';
+      histEl.appendChild(el('p','cd-empty',
+        'No cardio logged. Set speed, incline and duration above, then Log session. Each row keeps the equation it was estimated with.'));
+      recallBtn.disabled = true;
+      return;
+    }
+    recallBtn.disabled = false;
+
+    var valid = sessions.filter(function(s){ return s.model !== 'unvalidated' && s.kcal != null; });
+    var total = valid.reduce(function(a,s){ return a + s.kcal; }, 0);
+    var mins  = sessions.reduce(function(a,s){ return a + (s.minutes||0); }, 0);
+    countEl.textContent = sessions.length + (sessions.length===1?' session':' sessions');
+
+    var list = el('div','cd-hist');
+    sessions.slice(0, histCap).forEach(function(s){
+      var r = el('div','cd-r'); r.dataset.t = s.model;
+      r.appendChild(el('span','cd-d', fmtDate(s.ts)));
+      var bits = [];
+      if(s.mph != null)     bits.push(s.mph.toFixed(1)+' mph');
+      if(s.grade != null)   bits.push(s.grade.toFixed(1)+'%');
+      if(s.minutes != null) bits.push(Math.round(s.minutes)+' min');
+      bits.push(s.model === 'unvalidated' ? 'no model' : s.model);
+      r.appendChild(el('span','cd-s', bits.join(' · ')));
+
+      var v = el('span','cd-v');
+      var fig = s.kcal != null ? ki(s.kcal)+' kcal'
+              : (s.kcalLo != null && s.kcalHi != null) ? span(s.kcalLo,s.kcalHi)+' kcal'
+              : DASH;
+      v.appendChild(el('b',null,fig));
+      var badge = el('i',null, s.model === 'unvalidated' ? 'unvalidated' : 'estimated');
+      if(s.model === 'unvalidated') badge.dataset.t = 'unval';
+      v.appendChild(badge);
+      r.appendChild(v);
+      list.appendChild(r);
+    });
+    histEl.appendChild(list);
+
+    if(sessions.length > histCap){
+      var b = el('button','btn cd-more','Show all '+sessions.length); b.type='button';
+      on(b,'click', function(){ histCap = 9999; paintHistory(); });
+      histEl.appendChild(b);
+    }
+
+    /* §9 — partial totals are disclosed, never quietly summed */
+    var skipped = sessions.length - valid.length;
+    var foot = Math.round(mins) + ' min logged. Net total ' + ki(total) + ' kcal, estimated.';
+    if(skipped) foot += ' ' + skipped + (skipped===1?' session is':' sessions are') +
+      ' left out of that total: no validated equation covers the speed it was run at.';
+    histEl.appendChild(el('p','cd-foot', foot));
+  }
+
+  /* --------------------------------------------------------------- actions */
+  on(logBtn,'click', function(){
+    var c = last || compute(form, mass());
+    if(!c.ok) return;
+    var entry = {
+      ts: Date.now(),
+      minutes: form.minutes,
+      mph: form.mph,
+      grade: form.grade,
+      /* §9 — in the gap there is no defensible point value, so kcal is null and
+         the bracket travels beside it. See INTEGRATOR NOTE. */
+      kcal: c.model === 'unvalidated' ? null : Math.round(c.net),
+      model: c.model,
+      consoleKcal: c.consoleKcal,
+      /* extras: the integrator may persist or ignore them */
+      kcalLo: Math.round(c.netLo), kcalHi: Math.round(c.netHi),
+      kcalNet: c.net == null ? null : Math.round(c.net),
+      kcalGross: c.gross == null ? null : Math.round(c.gross),
+      grossLo: Math.round(c.grossLo), grossHi: Math.round(c.grossHi),
+      consoleLo: Math.round(c.consoleLo), consoleHi: Math.round(c.consoleHi),
+      mets: c.mets == null ? null : round(c.mets,2),
+      massLb: c.massLb,
+      basis: 'net',
+      source: 'ACSM'
+    };
+    if(onLog) onLog(entry);
+  });
+
+  on(recallBtn,'click', function(){
+    var s = sessions[0];
+    if(!s) return;
+    if(s.mph     != null) form.mph     = norm('mph',     s.mph,     form.mph);
+    if(s.grade   != null) form.grade   = norm('grade',   s.grade,   form.grade);
+    if(s.minutes != null) form.minutes = norm('minutes', s.minutes, form.minutes);
+    Object.keys(inputs).forEach(function(k){ inputs[k].value = form[k].toFixed(LIM[k].dp); });
+    queue();
+  });
+
+  /* the strip is laid out in percentages, so only the zone legends need a
+     measurement when the panel resizes */
+  var ro = null;
+  if(window.ResizeObserver){
+    ro = new ResizeObserver(function(){ fitZones(); });
+    ro.observe(strip);
+  }else{
+    on(window,'resize', fitZones);
+  }
+
+  paint();
+  paintHistory();
+
+  /* ------------------------------------------------------------------ API */
+  return {
+    render: function(list){
+      sessions = (Array.isArray(list) ? list : [])
+        .map(clean).filter(Boolean)
+        .sort(function(a,b){ return b.ts - a.ts; });      /* newest first */
+      if(sessions.length <= 6) histCap = 6;
+      paintHistory();
+      paint();                                            /* body mass may have moved */
+    },
+    value: function(){
+      var c = last || compute(form, mass());
+      return {
+        mph: form.mph, grade: form.grade, minutes: form.minutes,
+        massLb: c.massLb, model: c.model, ok: c.ok,
+        kcal: c.model === 'unvalidated' ? null : (c.net == null ? null : Math.round(c.net)),
+        kcalLo: c.netLo == null ? null : Math.round(c.netLo),
+        kcalHi: c.netHi == null ? null : Math.round(c.netHi),
+        kcalGross: c.gross == null ? null : Math.round(c.gross),
+        consoleKcal: c.consoleKcal,
+        mets: c.mets == null ? null : round(c.mets,2),
+        distance: round(c.distance,2),
+        caveats: c.caveats.map(function(v){ return v.s; })
+      };
+    },
+    destroy: function(){
+      stepBtns.forEach(function(t){ if(t[1]._cdStop) t[1]._cdStop(); });
+      offs.forEach(function(a){ try{ a[0].removeEventListener(a[1],a[2],a[3]); }catch(e){} });
+      offs.length = 0;
+      if(ro){ try{ ro.disconnect(); }catch(e){} }
+      if(root.parentNode === mount) mount.removeChild(root); else root.remove();
+    },
+    /* exposed for tests / for the integrator's own totals */
+    _model: {compute:compute, vo2Gross:vo2Gross, modelFor:modelFor}
+  };
+}
+
+window.initCardio = initCardio;
+
+/* ---------------------------------------------------------------------------
+   INTEGRATOR NOTE
+
+   entry.kcal is NULL for model:'unvalidated'. That is deliberate: between 3.7
+   and 5.0 mph neither ACSM equation is anchored, so there is no single number
+   to store. entry.kcalLo / entry.kcalHi carry the bracket. When totalling,
+   use (e.kcal || 0) rather than (a + e.kcal), and disclose the exclusion the
+   way the panel's own footer does.
+
+   entry.kcal is NET of resting metabolism. Do not add it to a MET-based
+   session burn without checking that one is not already gross.
+--------------------------------------------------------------------------- */
+})();
+
+</script>
+<script>
+
+/* ============================================================================
+   WORKER 4 — BACKUP: save / export / import, plus iOS hardening helpers.
+
+   window.initBackup({mount, getState, applyState, csv, downloads, ...})
+     -> {refresh(), destroy()}
+
+   Also hangs off the same function, for the integrator and for tests:
+     initBackup.envelope(state)          build the export envelope
+     initBackup.validate(text)           parse + validate, no side effects
+     initBackup.mergeStates(cur, inc)    the exact union the preview promises
+     initBackup.safeStorage              localStorage that cannot throw
+     initBackup.installLifecycle(h)      background/foreground on iOS
+
+   This module never writes the app's own storage key and never re-renders the
+   app. It validates, previews, and hands a finished state object to the host.
+   ========================================================================== */
+(function(){
+"use strict";
+
+var APP='onebell', SCHEMA=2, MIN_SCHEMA=1;
+var MAX_INPUT=8*1024*1024;      /* refuse to parse beyond this, unread */
+var MAX_SESSIONS=5000, MAX_ENTRIES=2000, MAX_PLAN=60;
+var RP_KEY='onebell.restorepoint', RP_MAX=1500000;
+var ARM_MS=12000;               /* a live destructive control disarms itself */
+var uid=0;
+
+/* ---------------------------------------------------------------- storage
+   §B: localStorage can throw on the ACCESSOR itself in some iOS contexts
+   (Block All Cookies, thumbnail capture, some private windows), so even
+   `typeof localStorage` sits inside try/catch. A memory map keeps the page
+   correct when there is no store at all. */
+var mem={}, lsState=null;
+function lsOk(){
+  if(lsState!==null) return lsState;
+  lsState=false;
+  try{
+    var s=window.localStorage, k='__bk'+Date.now();
+    s.setItem(k,'1'); s.getItem(k); s.removeItem(k); lsState=true;
+  }catch(e){ lsState=false; }
+  return lsState;
+}
+function lsGet(k){ try{ if(lsOk()) return window.localStorage.getItem(k); }catch(e){} 
+  return (k in mem)?mem[k]:null; }
+function lsSet(k,v){ try{ if(lsOk()){ window.localStorage.setItem(k,v); mem[k]=v; return true; } }catch(e){}
+  mem[k]=v; return false; }
+function lsDel(k){ try{ if(lsOk()) window.localStorage.removeItem(k); }catch(e){} delete mem[k]; }
+
+/* ------------------------------------------------------------------ utils */
+function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,function(c){
+  return c==='&'?'&amp;':c==='<'?'&lt;':c==='>'?'&gt;':'&quot;'; }); }
+function typeOf(v){ return v===undefined?'missing':(v===null?'null':(Array.isArray(v)?'an array':(typeof v==='object'?'an object':'a '+typeof v))); }
+function clone(v){ return JSON.parse(JSON.stringify(v)); }
+function num(n){ try{ return Number(n).toLocaleString(); }catch(e){ return String(n); } }
+function bytesOf(s){ try{ return new TextEncoder().encode(s).length; }catch(e){ return String(s).length; } }
+function fmtBytes(b){
+  if(b==null) return '—';
+  if(b<1024) return b+' B';
+  if(b<1024*1024) return (b/1024).toFixed(b<10240?1:0)+' KB';
+  return (b/1048576).toFixed(1)+' MB';
+}
+function pad(n){ return (n<10?'0':'')+n; }
+function isoDay(d){ return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate()); }
+function fmtWhen(ms){
+  if(!ms) return 'unknown';
+  try{ return new Date(ms).toLocaleString(undefined,
+    {day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}); }
+  catch(e){ return new Date(ms).toISOString().slice(0,16).replace('T',' '); }
+}
+function ago(ms){
+  if(!ms) return '';
+  var d=Date.now()-ms; if(d<0) return 'dated in the future';
+  var h=Math.round(d/3600000);
+  if(h<1) return 'under an hour old';
+  if(h<48) return h+' h old';
+  return Math.round(h/24)+' days old';
+}
+function plural(n,w){ return num(n)+' '+w+(n===1?'':'s'); }
+
+/* --------------------------------------------------------------- envelope */
+function envelope(state){
+  var s=statsOf(state);
+  return {
+    app:APP,
+    schema:SCHEMA,
+    exported:new Date().toISOString(),
+    exportedAt:Date.now(),
+    /* advisory only — the reader recounts and never trusts these */
+    counts:{sessions:s.sessions, sets:s.sets, skipped:s.skipped, first:s.first, last:s.last},
+    payload:{
+      settings:state.settings, plan:state.plan, weights:state.weights,
+      sessions:state.sessions, current:state.current,
+      planRev:state.planRev, updatedAt:state.updatedAt
+    }
+  };
+}
+
+function dayOf(s){
+  if(s&&typeof s.date==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(s.date)) return s.date;
+  if(s&&+s.startedAt) return isoDay(new Date(+s.startedAt));
+  return null;
+}
+function statsOf(st){
+  var ss=(st&&st.sessions)||[], sets=0, skipped=0, first=null, last=null;
+  for(var i=0;i<ss.length;i++){
+    var s=ss[i], en=(s&&s.entries)||[];
+    for(var j=0;j<en.length;j++){ if(en[j]&&en[j].skipped) skipped++; else sets++; }
+    var d=dayOf(s);
+    if(d){ if(!first||d<first) first=d; if(!last||d>last) last=d; }
+  }
+  var cu=st&&st.current;
+  return {sessions:ss.length, sets:sets, skipped:skipped, first:first, last:last,
+          live:(cu&&cu.entries)?cu.entries.length:0,
+          plan:((st&&st.plan)||[]).length};
+}
+
+/* -------------------------------------------------------------- validate
+   §8: refuse with the mechanism and the fix, never import garbage. Returns
+   {ok:false, problems:[...]} or {ok:true, state, env, notices, stats}. */
+function validate(raw){
+  function no(){ return {ok:false, problems:Array.prototype.slice.call(arguments)}; }
+
+  if(raw==null) return no('Nothing to read. Paste the backup JSON into the box, or choose a .json file.');
+  var text=String(raw).replace(/^﻿/,'').trim();
+  if(!text) return no('Nothing to read. Paste the backup JSON into the box, or choose a .json file.');
+  if(text.length>MAX_INPUT)
+    return no('The text is '+fmtBytes(text.length)+'. The reader stops at '+fmtBytes(MAX_INPUT)+
+              ' — far larger than any set log — so it was refused unread.');
+
+  var d;
+  try{ d=JSON.parse(text); }
+  catch(e){
+    var m=/position (\d+)/.exec(e.message||''), where='';
+    if(m){ var i=+m[1];
+      where=' Near: "'+String(text.slice(Math.max(0,i-28),i+28)).replace(/\s+/g,' ')+'".'; }
+    return no('Not valid JSON: '+(e.message||'the parser stopped')+'.'+where+
+              ' Paste the whole file, from the first { to the last }.');
+  }
+
+  if(!d||typeof d!=='object'||Array.isArray(d))
+    return no('The top level is '+typeOf(d)+'. A backup is a JSON object carrying app, schema and payload.');
+
+  /* an envelope, or a bare state object lifted straight out of storage */
+  var env, payload, bare=false;
+  if(d.payload===undefined&&(d.settings||d.sessions||d.plan)){
+    bare=true; payload=d;
+    env={app:APP, schema:(+d.planRev>=2?2:1), exportedAt:+d.updatedAt||0, bare:true};
+  }else{
+    env=d; payload=d.payload;
+    if(env.app===undefined)
+      return no('No app field. This build reads '+APP+' backups, which name themselves in that field.');
+    if(String(env.app)!==APP)
+      return no('The file says app "'+String(env.app).slice(0,40)+'". This panel restores '+APP+
+                ' backups only — importing another app\'s state would overwrite the log with fields it does not share.');
+    if(env.schema===undefined||env.schema===null)
+      return no('No schema field. This build writes schema '+SCHEMA+' and reads '+MIN_SCHEMA+' to '+SCHEMA+'.');
+    if(typeof env.schema!=='number'||!isFinite(env.schema))
+      return no('schema is '+JSON.stringify(env.schema)+', not a number. This build reads schema '+
+                MIN_SCHEMA+' to '+SCHEMA+'.');
+    if(env.schema>SCHEMA)
+      return no('Schema '+env.schema+' comes from a newer build than this one, which reads up to '+SCHEMA+
+                '. Importing it here would drop the fields this build cannot see. Update the app first.');
+    if(env.schema<MIN_SCHEMA)
+      return no('Schema '+env.schema+' is older than this build reads ('+MIN_SCHEMA+' and up).');
+  }
+
+  if(!payload||typeof payload!=='object'||Array.isArray(payload))
+    return no('payload is '+typeOf(payload)+'. The envelope is there but carries no state to restore.');
+
+  var P=[], notices=[];
+  function fail(m){ if(P.length<3) P.push(m); }
+
+  /* settings ------------------------------------------------------------- */
+  if(payload.settings===undefined||payload.settings===null)
+    fail('payload.settings is missing. Without it the bell profile, rest timings and body mass cannot be restored.');
+  else if(typeof payload.settings!=='object'||Array.isArray(payload.settings))
+    fail('payload.settings is '+typeOf(payload.settings)+', not an object.');
+
+  /* plan ----------------------------------------------------------------- */
+  var plan=payload.plan;
+  if(!Array.isArray(plan)) fail('payload.plan is '+typeOf(plan)+', not an array of exercises.');
+  else if(!plan.length) fail('payload.plan is empty. A plan needs at least one exercise.');
+  else if(plan.length>MAX_PLAN) fail('payload.plan holds '+plan.length+' exercises; the limit is '+MAX_PLAN+'.');
+  else for(var pi=0;pi<plan.length;pi++){
+    var pe=plan[pi];
+    if(!pe||typeof pe!=='object'){ fail('plan['+pi+'] is '+typeOf(pe)+', not an exercise object.'); break; }
+    if(pe.id===undefined||pe.id===null||String(pe.id)===''){
+      fail('plan['+pi+'] has no id. Weights and history key off the exercise id, so an entry without one cannot be matched.'); break; }
+  }
+
+  /* weights -------------------------------------------------------------- */
+  if(payload.weights!==undefined&&payload.weights!==null&&
+     (typeof payload.weights!=='object'||Array.isArray(payload.weights)))
+    fail('payload.weights is '+typeOf(payload.weights)+', not an object keyed by exercise id.');
+  if(payload.weights===undefined||payload.weights===null)
+    notices.push('No weights block; the working weights will be re-derived from the last session.');
+
+  /* sessions ------------------------------------------------------------- */
+  var ss=payload.sessions;
+  if(!Array.isArray(ss)) fail('payload.sessions is '+typeOf(ss)+', not an array. The set log could not be read.');
+  else if(ss.length>MAX_SESSIONS)
+    fail('payload.sessions holds '+num(ss.length)+' sessions; the reader stops at '+num(MAX_SESSIONS)+'.');
+  else{
+    var seen={}, oddDates=0, thin=0;
+    for(var si=0;si<ss.length&&P.length<3;si++){
+      var s=ss[si];
+      if(!s||typeof s!=='object'||Array.isArray(s)){ fail('sessions['+si+'] is '+typeOf(s)+', not a session object.'); break; }
+      if(s.id===undefined||s.id===null||String(s.id)===''){
+        fail('sessions['+si+'] has no id. Merge matches sessions by id, so an entry without one cannot be placed.'); break; }
+      var sid=String(s.id);
+      if(seen[sid]!==undefined){
+        fail('sessions['+seen[sid]+'] and sessions['+si+'] share the id '+sid+
+             '. Merge keys on id, so one would silently swallow the other.'); break; }
+      seen[sid]=si;
+      if(!Array.isArray(s.entries)){ fail('sessions['+si+'] ('+sid+') has entries as '+typeOf(s.entries)+
+             ', not an array of sets.'); break; }
+      if(s.entries.length>MAX_ENTRIES){ fail('sessions['+si+'] ('+sid+') holds '+num(s.entries.length)+
+             ' sets; the reader stops at '+num(MAX_ENTRIES)+' per session.'); break; }
+      if(!dayOf(s)) oddDates++;
+      for(var ei=0;ei<s.entries.length;ei++){
+        var e=s.entries[ei];
+        if(!e||typeof e!=='object'){ fail('sessions['+si+'] ('+sid+') set '+(ei+1)+' is '+typeOf(e)+
+               ', not a logged set.'); break; }
+        if(e.ex===undefined||String(e.ex)===''){ fail('sessions['+si+'] ('+sid+') set '+(ei+1)+
+               ' names no exercise (ex). The set cannot be attributed.'); break; }
+        if(e.weight!==null&&e.weight!==undefined&&!isFinite(+e.weight)){
+          fail('sessions['+si+'] ('+sid+') set '+(ei+1)+' has weight '+JSON.stringify(e.weight)+
+               ', which is not a number. Volume and progression are computed from it.'); break; }
+        if(e.reps!==null&&e.reps!==undefined&&!isFinite(+e.reps)){
+          fail('sessions['+si+'] ('+sid+') set '+(ei+1)+' has reps '+JSON.stringify(e.reps)+
+               ', which is not a number.'); break; }
+      }
+      if(!s.entries.length) thin++;
+    }
+    if(oddDates) notices.push(plural(oddDates,'session')+' carry no usable date; the date is taken from the start time instead.');
+    if(thin) notices.push(plural(thin,'session')+' hold no sets at all.');
+  }
+
+  /* current -------------------------------------------------------------- */
+  var cu=payload.current;
+  if(cu!==undefined&&cu!==null){
+    if(typeof cu!=='object'||Array.isArray(cu)) fail('payload.current is '+typeOf(cu)+'. It is either null or a session.');
+    else if(!Array.isArray(cu.entries)) fail('payload.current has entries as '+typeOf(cu.entries)+', not an array.');
+    else if(cu.id===undefined||String(cu.id)==='') fail('payload.current has no id.');
+  }
+
+  if(P.length) return {ok:false, problems:P};
+
+  /* normalise — coerce the known fields, keep everything else untouched */
+  function normEntry(e){
+    return Object.assign({},e,{
+      ex:String(e.ex), set:+e.set||1,
+      side:(e.side===null||e.side===undefined)?null:String(e.side),
+      weight:(e.weight===null||e.weight===undefined)?null:+e.weight,
+      reps:(e.reps===null||e.reps===undefined)?null:+e.reps,
+      target:+e.target||0, skipped:!!e.skipped });
+  }
+  function normSession(s){
+    return Object.assign({},s,{
+      id:String(s.id), date:dayOf(s)||isoDay(new Date()),
+      startedAt:+s.startedAt||0, endedAt:s.endedAt?+s.endedAt:null,
+      done:!!s.done, entries:(s.entries||[]).map(normEntry),
+      updatedAt:+s.updatedAt||+s.endedAt||+s.startedAt||0 });
+  }
+  function normPlan(e){
+    return Object.assign({},e,{
+      id:String(e.id), name:String(e.name||'Exercise'),
+      sets:Math.max(1,Math.min(10,+e.sets||3)),
+      reps:Math.max(1,Math.min(50,+e.reps||10)),
+      perSide:!!e.perSide, start:+e.start||20, note:e.note==null?'':String(e.note) });
+  }
+  var w={}, src=payload.weights||{};
+  for(var k in src) if(Object.prototype.hasOwnProperty.call(src,k)&&isFinite(+src[k])) w[k]=+src[k];
+
+  var state={
+    settings:Object.assign({},payload.settings),
+    plan:plan.map(normPlan),
+    weights:w,
+    sessions:ss.map(normSession),
+    current:(cu&&cu.entries)?normSession(cu):null,
+    planRev:+payload.planRev||1,
+    updatedAt:+payload.updatedAt||+env.exportedAt||0
+  };
+  if(bare) notices.push('No envelope on this file — it was read as a bare state object at schema '+env.schema+'.');
+  if(env.counts&&+env.counts.sessions>=0&&+env.counts.sessions!==state.sessions.length)
+    notices.push('The header claims '+num(+env.counts.sessions)+' sessions; '+
+                 num(state.sessions.length)+' were actually found. The count found is the one used.');
+
+  return {ok:true, state:state, notices:notices, stats:statsOf(state),
+          env:{app:APP, schema:env.schema, exportedAt:+env.exportedAt||state.updatedAt||0, bare:bare},
+          bytes:bytesOf(text)};
+}
+
+/* ------------------------------------------------------------------ merge
+   Union sessions by id, newer updatedAt wins. Settings, plan and weights move
+   as a block from whichever side is newer overall. A session in progress on
+   this device is never clobbered by an import. */
+function mergeStates(cur,inc){
+  var out=clone(cur||{}), byId={}, order=[], added=0, updated=0, kept=0;
+  var mine=(cur&&cur.sessions)||[], theirs=(inc&&inc.sessions)||[];
+  mine.forEach(function(s){ if(!s||s.id==null) return; if(byId[s.id]===undefined) order.push(String(s.id));
+    byId[String(s.id)]=s; });
+  theirs.forEach(function(s){
+    if(!s||s.id==null) return;
+    var id=String(s.id), m=byId[id];
+    if(m===undefined){ byId[id]=s; order.push(id); added++; }
+    else if((+s.updatedAt||0)>(+m.updatedAt||0)){ byId[id]=s; updated++; }
+    else kept++;
+  });
+  out.sessions=order.map(function(id){ return byId[id]; })
+                    .sort(function(a,b){ return (+a.startedAt||0)-(+b.startedAt||0); });
+
+  var incNewer=(+((inc&&inc.updatedAt))||0)>(+((cur&&cur.updatedAt))||0);
+  if(incNewer){
+    out.settings=clone(inc.settings||{});
+    out.plan=clone(inc.plan||out.plan);
+    out.weights=clone(inc.weights||{});
+    out.planRev=+inc.planRev||out.planRev||1;
+  }
+  /* an unfinished session on this device outranks anything in the file */
+  var liveHere=cur&&cur.current&&cur.current.entries&&cur.current.entries.length;
+  if(!liveHere) out.current=(inc&&inc.current)?clone(inc.current):(cur?cur.current:null);
+  if(out.current&&out.sessions.some(function(s){ return String(s.id)===String(out.current.id); }))
+    out.current=null;                       /* the day already rolled; the closed copy wins */
+
+  out.updatedAt=Math.max(+((cur&&cur.updatedAt))||0,+((inc&&inc.updatedAt))||0,Date.now());
+  out.__merge={added:added, updated:updated, kept:kept, incNewer:incNewer,
+               liveKept:!!liveHere, total:out.sessions.length};
+  return out;
+}
+function mergeCounts(cur,inc){
+  var m=mergeStates(cur,inc).__merge; return m;
+}
+
+/* -------------------------------------------------------------- plan diff */
+function planDiff(a,b){
+  a=a||[]; b=b||[];
+  var A={},B={},i;
+  for(i=0;i<a.length;i++) A[String(a[i].id)]=a[i];
+  for(i=0;i<b.length;i++) B[String(b[i].id)]=b[i];
+  var adds=[],drops=[],chg=[];
+  for(i=0;i<b.length;i++){ var e=b[i], m=A[String(e.id)];
+    if(!m) adds.push(e.name);
+    else if(m.name!==e.name||+m.sets!==+e.sets||+m.reps!==+e.reps||!!m.perSide!==!!e.perSide) chg.push(e.name); }
+  for(i=0;i<a.length;i++) if(!B[String(a[i].id)]) drops.push(a[i].name);
+  return {adds:adds, drops:drops, changed:chg,
+          same:!adds.length&&!drops.length&&!chg.length};
+}
+
+/* -------------------------------------------------------- lifecycle (iOS)
+   iOS suspends timers, AudioContexts and wake locks the moment the app is
+   backgrounded, and may kill the tab without ever firing beforeunload.
+   pagehide is the last reliable call: persist there. */
+function installLifecycle(h){
+  h=h||{};
+  var offs=[], hiddenAt=0;
+  function on(t,f,tgt){ var g=tgt||document; g.addEventListener(t,f);
+    offs.push(function(){ g.removeEventListener(t,f); }); }
+  function hide(){ if(hiddenAt) return; hiddenAt=Date.now();
+    try{ if(h.onSuspend) h.onSuspend(); }catch(e){} }
+  function show(){ var away=hiddenAt?Date.now()-hiddenAt:0; hiddenAt=0;
+    try{ if(h.onResume) h.onResume(away); }catch(e){} }
+  on('visibilitychange',function(){ document.visibilityState==='hidden'?hide():show(); });
+  on('pagehide',hide,window);
+  on('pageshow',show,window);
+  on('freeze',hide);            /* Page Lifecycle: the tab is being frozen */
+  on('resume',show);
+  return {destroy:function(){ offs.forEach(function(f){ f(); }); offs=[]; }};
+}
+
+/* -------------------------------------------------------------- file read */
+function readFile(file){
+  return new Promise(function(res,rej){
+    if(!file) return rej(new Error('No file was handed over by the picker.'));
+    if(file.size===0)
+      return rej(new Error('The chosen file is 0 bytes. iOS hands over an empty placeholder for a file '+
+        'that is still in iCloud — open it once in Files so it downloads, then choose it again.'));
+    if(file.size>MAX_INPUT)
+      return rej(new Error('The file is '+fmtBytes(file.size)+'. The reader stops at '+fmtBytes(MAX_INPUT)+'.'));
+    var done=false;
+    var t=setTimeout(function(){ if(!done){ done=true;
+      rej(new Error('The file did not finish reading in 15 s. Open it in Files, copy the text, and paste it below.')); } },15000);
+    function ok(v){ if(done) return; done=true; clearTimeout(t); res(String(v==null?'':v)); }
+    function bad(m){ if(done) return; done=true; clearTimeout(t); rej(new Error(m)); }
+    function viaReader(){
+      try{
+        var fr=new FileReader();
+        fr.onload=function(){ ok(fr.result); };
+        fr.onerror=function(){ bad('The file could not be read (' +
+          ((fr.error&&fr.error.name)||'reader error')+'). Copy the text out of it and paste it below.'); };
+        fr.onabort=function(){ bad('Reading the file was interrupted. Choose it again, or paste the text below.'); };
+        fr.readAsText(file);
+      }catch(e){ bad('This browser refused to read the file ('+(e.message||'unknown')+
+        '). Copy the text out of it and paste it below.'); }
+    }
+    try{
+      if(typeof file.text==='function') file.text().then(ok,function(){ viaReader(); });
+      else viaReader();
+    }catch(e){ viaReader(); }
+  });
+}
+
+/* -------------------------------------------------------------- clipboard */
+function selectAll(ta){
+  try{
+    ta.focus();
+    if(typeof ta.setSelectionRange==='function') ta.setSelectionRange(0,ta.value.length);
+    else ta.select();
+    return true;
+  }catch(e){ return false; }
+}
+function copyText(ta,text){
+  return new Promise(function(res){
+    var nav=navigator;
+    if(nav&&nav.clipboard&&nav.clipboard.writeText){
+      nav.clipboard.writeText(text).then(function(){ res('api'); },function(){ res(legacy()); });
+      return;
+    }
+    res(legacy());
+    function legacy(){
+      if(!selectAll(ta)) return null;
+      try{ return document.execCommand('copy')?'exec':null; }catch(e){ return null; }
+    }
+  });
+}
+
+/* ============================================================== the panel */
+function initBackup(o){
+  o=o||{};
+  if(typeof o.getState!=='function')
+    throw new Error('initBackup: getState() is required — the panel serialises whatever it returns.');
+
+  var mount=o.mount||document.querySelector('[data-bk-root]');
+  if(!mount||!mount.querySelector)
+    throw new Error('initBackup: mount element required — pass the node the panel lives in.');
+
+  var built=false, root=mount.matches&&mount.matches('[data-bk-root]')?mount:mount.querySelector('[data-bk-root]');
+  if(!root){ mount.innerHTML=TEMPLATE; root=mount.querySelector('[data-bk-root]'); built=true; }
+
+  var q=function(sel){ return root.querySelector(sel); };
+  var E={
+    sum:q('[data-bk-sum]'),
+    gs:q('[data-bk-gs]'), gsc:q('[data-bk-gsc]'), gt:q('[data-bk-gt]'), gtc:q('[data-bk-gtc]'),
+    gp:q('[data-bk-gp]'), gb:q('[data-bk-gb]'),
+    xj:q('[data-bk-xj]'), xc:q('[data-bk-xc]'), xnote:q('[data-bk-xnote]'), xmsg:q('[data-bk-xmsg]'),
+    outwrap:q('[data-bk-outwrap]'), outlbl:q('[data-bk-outlbl]'), outta:q('[data-bk-outta]'),
+    copy:q('[data-bk-copy]'), outclose:q('[data-bk-outclose]'),
+    pick:q('[data-bk-pick]'), file:q('[data-bk-file]'), read:q('[data-bk-read]'),
+    input:q('[data-bk-in]'), msg:q('[data-bk-msg]'), pv:q('[data-bk-pv]'), doRow:q('[data-bk-do]'),
+    merge:q('[data-bk-merge]'), replace:q('[data-bk-replace]'), cancel:q('[data-bk-cancel]'),
+    armwarn:q('[data-bk-armwarn]'),
+    rp:q('[data-bk-rp]'), rpt:q('[data-bk-rpt]'), revert:q('[data-bk-revert]'), rpdrop:q('[data-bk-rpdrop]')
+  };
+
+  /* unique id so two panels on one page cannot collide */
+  var fid='bk-file-'+(++uid);
+  if(E.file){ E.file.id=fid; }
+  if(E.pick){ E.pick.setAttribute('for',fid); }
+
+  var DL=o.downloads||null, CSV=(typeof o.csv==='function')?o.csv:null;
+  var canApply=(typeof o.applyState==='function');
+  var held=null;               /* the last valid parse, awaiting a decision */
+  var armed=false, armT=null;
+  var rpMeta=null;
+  var life=null, offs=[];
+
+  function on(el,ev,fn,opts){ if(!el) return; el.addEventListener(ev,fn,opts);
+    offs.push(function(){ el.removeEventListener(ev,fn,opts); }); }
+
+  /* ------------------------------------------------------------ messaging */
+  function say(el,tone,html){
+    if(!el) return;
+    if(!html){ el.hidden=true; el.innerHTML=''; el.removeAttribute('data-tone'); return; }
+    el.innerHTML=html; el.setAttribute('data-tone',tone||'ink'); el.hidden=false;
+  }
+  function listHtml(items){
+    return '<ul>'+items.map(function(t){ return '<li>'+esc(t)+'</li>'; }).join('')+'</ul>';
+  }
+
+  /* -------------------------------------------------------------- gauges */
+  function refresh(){
+    var st=safeState();
+    var s=statsOf(st||{});
+    var text=st?JSON.stringify(envelope(st)):'';
+    if(E.gs) E.gs.textContent=num(s.sessions);
+    if(E.gsc) E.gsc.textContent=s.live?('+1 in progress, '+plural(s.live,'set')):' ';
+    if(E.gt) E.gt.textContent=num(s.sets);
+    if(E.gtc) E.gtc.textContent=s.skipped?('+'+num(s.skipped)+' skipped'):' ';
+    if(E.gp) E.gp.textContent=(s.first&&s.last)?(s.first===s.last?s.first:s.first+' → '+s.last):'—';
+    if(E.gb) E.gb.textContent=text?fmtBytes(bytesOf(text)):'—';
+    if(E.sum) E.sum.textContent=num(s.sessions)+' sessions · '+(text?fmtBytes(bytesOf(text)):'—');
+
+    if(E.xnote){
+      var lines=[];
+      if(!s.sessions&&!s.live)
+        lines.push('No sessions logged yet. A backup taken now carries the plan and settings only — log a set to have history worth keeping.');
+      lines.push(DL?'JSON restores everything. CSV is the set log only and cannot be imported back.'
+                   :'This frame has no download capability, so export writes the text into a box for you to copy. JSON restores everything; CSV is the set log only and cannot be imported back.');
+      E.xnote.textContent=lines.join(' ');
+    }
+    if(E.xc) E.xc.hidden=!CSV;
+    if(!canApply){
+      say(E.msg,'bad','Restore is unavailable: the host passed no applyState handler, so an import would have nowhere to land.');
+      if(E.read) E.read.disabled=true;
+      if(E.pick) E.pick.setAttribute('aria-disabled','true');
+    }
+    if(held) drawPreview();     /* the state moved under an open preview */
+    drawRP();
+  }
+  function safeState(){
+    try{ var st=o.getState(); return (st&&typeof st==='object')?st:null; }catch(e){ return null; }
+  }
+
+  /* -------------------------------------------------------------- export */
+  function showOut(label,text){
+    if(!E.outwrap) return;
+    if(E.outlbl) E.outlbl.textContent=label;
+    E.outta.value=text;
+    E.outwrap.hidden=false;
+    selectAll(E.outta);
+  }
+  function stamp(){ return isoDay(new Date()); }
+
+  function doExport(kind){
+    var st=safeState();
+    if(!st){ say(E.xmsg,'bad','The app returned no state to export. Reload the page and try again.'); return; }
+    var text, name;
+    if(kind==='csv'){
+      if(!CSV){ say(E.xmsg,'bad','No CSV builder was passed to this panel.'); return; }
+      try{ text=CSV(); }catch(e){ say(E.xmsg,'bad','The CSV builder failed: '+esc(e.message||'unknown')+'.'); return; }
+      name='one-bell-log-'+stamp()+'.csv';
+      if(!text||text.split('\n').length<2){
+        say(E.xmsg,'warn','The set log is empty, so the CSV holds only its header row. Log a set first.');
+      }
+    }else{
+      try{ text=JSON.stringify(envelope(st),null,1); }
+      catch(e){ say(E.xmsg,'bad','The state could not be serialised ('+esc(e.message||'unknown')+
+        '). Something in it is circular, which a backup cannot carry.'); return; }
+      name='one-bell-'+stamp()+'.json';
+    }
+    if(!DL||typeof DL.save!=='function'){
+      showOut(kind==='csv'?'CSV · '+fmtBytes(bytesOf(text)):'JSON · '+fmtBytes(bytesOf(text)),text);
+      say(E.xmsg,'warn','Downloads are unavailable in this frame, so the file was written into the box below. '+
+        'Copy it into a note or a mail to yourself.');
+      return;
+    }
+    say(E.xmsg,'ink','Saving '+esc(name)+'…');
+    Promise.resolve().then(function(){ return DL.save({filename:name,data:text}); })
+      .then(function(){ say(E.xmsg,'ok','Saved '+esc(name)+' · '+fmtBytes(bytesOf(text))+'.'); })
+      .catch(function(e){
+        showOut(kind==='csv'?'CSV':'JSON',text);
+        say(E.xmsg,'warn','The download was refused ('+esc((e&&e.message)||'no reason given')+
+          '). The file is in the box below — copy it out instead.');
+      });
+  }
+
+  /* ------------------------------------------------------------- read in */
+  function readNow(text,origin){
+    disarm();
+    held=null;
+    if(E.pv){ E.pv.hidden=true; E.pv.innerHTML=''; }
+    if(E.doRow) E.doRow.hidden=true;
+    var r=validate(text);
+    if(!r.ok){
+      say(E.msg,'bad','Refused. '+(r.problems.length===1?esc(r.problems[0]):listHtml(r.problems)));
+      return false;
+    }
+    held=r;
+    say(E.msg,'ok','Read '+(origin||'the text')+'. Nothing has been changed yet — check the preview, then choose.');
+    drawPreview();
+    if(E.doRow) E.doRow.hidden=false;
+    return true;
+  }
+
+  function drawPreview(){
+    if(!E.pv||!held) return;
+    var cur=safeState()||{sessions:[],plan:[],settings:{},updatedAt:0};
+    var inc=held.state, s=held.stats, rows=[];
+    var m=mergeCounts(cur,inc), curS=statsOf(cur);
+
+    rows.push(['File','schema <b>'+esc(held.env.schema)+'</b> · exported '+esc(fmtWhen(held.env.exportedAt))+
+      ' <span class="bk-q">('+esc(ago(held.env.exportedAt))+')</span> · '+fmtBytes(held.bytes)]);
+    rows.push(['Sessions','<b>'+num(s.sessions)+'</b>'+
+      ((s.first&&s.last)?' <span class="bk-q">'+esc(s.first)+' → '+esc(s.last)+'</span>':'')+
+      (s.live?' · 1 in progress':'')]);
+    rows.push(['Sets','<b>'+num(s.sets)+'</b>'+(s.skipped?' <span class="bk-q">+'+num(s.skipped)+' skipped</span>':'')]);
+
+    var pd=planDiff(cur.plan,inc.plan), pt;
+    if(pd.same) pt='<b>'+num(s.plan)+'</b> exercises, same as this device';
+    else{
+      var bits=[];
+      if(pd.adds.length) bits.push('adds '+pd.adds.map(esc).join(', '));
+      if(pd.drops.length) bits.push('drops '+pd.drops.map(esc).join(', '));
+      if(pd.changed.length) bits.push('changes '+pd.changed.map(esc).join(', '));
+      pt='<b>'+num(s.plan)+'</b> exercises · <span class="bk-x">'+bits.join(' · ')+'</span>';
+    }
+    rows.push(['Plan',pt]);
+
+    var se=inc.settings||{};
+    var prof=(typeof o.describeProfile==='function')?o.describeProfile(se.profile):se.profile;
+    rows.push(['Settings',esc(prof||'no profile')+' · rest '+esc(se.rest==null?'—':se.rest)+' s · target '+
+      esc(se.target==null?'—':se.target)+' min · body '+esc(se.bodyMass==null?'—':se.bodyMass)]);
+
+    rows.push(['Merge','adds <b>'+num(m.added)+'</b> · updates <b>'+num(m.updated)+'</b> · keeps <b>'+
+      num(m.kept)+'</b> → <b>'+num(m.total)+'</b> sessions'+
+      (m.incNewer?' · plan and settings taken from the backup':' · plan and settings on this device are newer and stay')+
+      (m.liveKept?' · the session in progress here is kept':'')]);
+    rows.push(['Replace','installs <b>'+num(s.sessions)+'</b> · <span class="bk-x">discards '+
+      num(curS.sessions)+' on this device'+(curS.live?' and '+plural(curS.live,'set')+' logged today':'')+'</span>']);
+
+    if(held.notices.length) rows.push(['Notices','<span class="bk-x">'+held.notices.map(esc).join(' ')+'</span>']);
+    if((+inc.updatedAt||0)<(+cur.updatedAt||0))
+      rows.push(['Age','<span class="bk-x">The backup is older than this device by '+
+        esc(ago(+inc.updatedAt||0))+' relative to the last change here.</span>']);
+
+    E.pv.innerHTML=rows.map(function(r){
+      return '<div class="bk-pvr"><span class="lbl">'+esc(r[0])+'</span><span class="bk-pvv">'+r[1]+'</span></div>';
+    }).join('');
+    E.pv.hidden=false;
+  }
+
+  /* ---------------------------------------------------------- restore pt */
+  function drawRP(){
+    if(!E.rp) return;
+    if(!rpMeta){ E.rp.hidden=true; return; }
+    E.rp.hidden=false;
+    E.rpt.textContent=fmtWhen(rpMeta.at)+' · '+plural(rpMeta.sessions,'session')+
+      ' · '+plural(rpMeta.sets,'set')+', taken before the last import';
+  }
+  function loadRP(){
+    if(o.restorePoint===false) return;
+    var raw=lsGet(RP_KEY); if(!raw) return;
+    try{ var d=JSON.parse(raw); if(d&&d.state){ var s=statsOf(d.state);
+      rpMeta={at:+d.at||0, sessions:s.sessions, sets:s.sets}; } }
+    catch(e){ lsDel(RP_KEY); }
+  }
+  function writeRP(st){
+    if(o.restorePoint===false) return {ok:false,why:'restore points are switched off by the host'};
+    var text;
+    try{ text=JSON.stringify({at:Date.now(),state:st}); }
+    catch(e){ return {ok:false,why:'the current state could not be serialised'}; }
+    if(text.length>RP_MAX)
+      return {ok:false,why:'the current state is '+fmtBytes(text.length)+', over the '+fmtBytes(RP_MAX)+
+        ' limit for a spare copy'};
+    if(!lsSet(RP_KEY,text))
+      return {ok:false,why:'this browser refuses to write local storage, so the copy would not survive a reload'};
+    var s=statsOf(st); rpMeta={at:Date.now(),sessions:s.sessions,sets:s.sets}; drawRP();
+    return {ok:true};
+  }
+
+  /* ------------------------------------------------------------- commit */
+  function arm(){
+    if(!held) return;
+    var cur=safeState()||{sessions:[]}, cs=statsOf(cur);
+    armed=true;
+    E.replace.classList.add('sig');
+    E.replace.textContent='Confirm replace';
+    E.merge.disabled=true;
+    say(null);
+    if(E.armwarn){
+      E.armwarn.textContent='Replace deletes '+plural(cs.sessions,'session')+' and '+plural(cs.sets,'set')+
+        ' held on this device'+(cs.live?', including the session in progress':'')+
+        '. Export first if this device holds sets the backup does not. Press again within '+
+        Math.round(ARM_MS/1000)+' s to confirm.';
+      E.armwarn.hidden=false;
+    }
+    clearTimeout(armT); armT=setTimeout(disarm,ARM_MS);
+  }
+  function disarm(){
+    armed=false; clearTimeout(armT); armT=null;
+    if(E.replace){ E.replace.classList.remove('sig'); E.replace.textContent='Replace'; }
+    if(E.merge) E.merge.disabled=false;
+    if(E.armwarn){ E.armwarn.hidden=true; E.armwarn.textContent=''; }
+  }
+
+  function commit(mode){
+    if(!held) return;
+    if(!canApply){ say(E.msg,'bad','The host passed no applyState handler, so nothing can be written.'); return; }
+    var cur=safeState();
+    if(!cur){ say(E.msg,'bad','The app returned no current state, so the import cannot be measured against it. Reload and try again.'); return; }
+
+    var before=statsOf(cur);
+    var next, m=null;
+    if(mode==='merge'){ next=mergeStates(cur,held.state); m=next.__merge; delete next.__merge; }
+    else next=clone(held.state);
+
+    var rp=writeRP(cur);
+    var rpNote=rp.ok?' A restore point was kept.':' No restore point: '+rp.why+'.';
+
+    var out;
+    try{ out=o.applyState(next,mode); }
+    catch(e){
+      say(E.msg,'bad','The app refused the import: '+esc((e&&e.message)||'no reason given')+
+        '. Nothing was changed by this panel.'+(rp.ok?' The restore point below still holds the state from before.':''));
+      return;
+    }
+    Promise.resolve(out).then(function(){
+      var after=statsOf(next);
+      if(mode==='merge')
+        say(E.msg,'ok','Merged. '+num(m.added)+' sessions added, '+num(m.updated)+' updated, '+
+          num(m.kept)+' kept — '+num(after.sessions)+' now held.'+rpNote);
+      else
+        say(E.msg,'ok','Replaced. '+num(after.sessions)+' sessions installed, '+
+          num(before.sessions)+' discarded.'+rpNote);
+      held=null; disarm();
+      if(E.pv){ E.pv.hidden=true; E.pv.innerHTML=''; }
+      if(E.doRow) E.doRow.hidden=true;
+      if(E.input) E.input.value='';
+      refresh();
+    },function(e){
+      say(E.msg,'bad','The app refused the import: '+esc((e&&e.message)||'no reason given')+
+        '.'+(rp.ok?' Use Revert below to put back the state from before.':' Nothing was changed by this panel.'));
+      disarm(); refresh();
+    });
+  }
+
+  function revert(){
+    var raw=lsGet(RP_KEY);
+    if(!raw){ say(E.msg,'bad','The restore point is gone from storage. Nothing was changed.'); rpMeta=null; drawRP(); return; }
+    var d;
+    try{ d=JSON.parse(raw); }
+    catch(e){ say(E.msg,'bad','The restore point could not be read back ('+esc(e.message||'parse failed')+
+      '). Nothing was changed.'); return; }
+    if(!d||!d.state){ say(E.msg,'bad','The restore point holds no state. Nothing was changed.'); return; }
+    var out;
+    try{ out=o.applyState(d.state,'replace'); }
+    catch(e){ say(E.msg,'bad','The app refused the revert: '+esc(e.message||'no reason given')+'.'); return; }
+    Promise.resolve(out).then(function(){
+      lsDel(RP_KEY); rpMeta=null;
+      say(E.msg,'ok','Reverted to the state saved at '+esc(fmtWhen(d.at))+'.');
+      refresh();
+    },function(e){ say(E.msg,'bad','The app refused the revert: '+esc((e&&e.message)||'no reason given')+'.'); });
+  }
+
+  /* --------------------------------------------------------------- wiring */
+  on(E.xj,'click',function(){ doExport('json'); });
+  on(E.xc,'click',function(){ doExport('csv'); });
+  on(E.outclose,'click',function(){ E.outwrap.hidden=true; E.outta.value=''; });
+  on(E.copy,'click',function(){
+    var t=E.outta?E.outta.value:'';
+    copyText(E.outta,t).then(function(how){
+      if(how) say(E.xmsg,'ok','Copied · '+fmtBytes(bytesOf(t))+'. Paste it into a note or a mail to yourself.');
+      else say(E.xmsg,'warn','Copying is blocked in this frame. The text is selected — long-press it, choose Select All, then Copy.');
+    });
+  });
+
+  on(E.file,'change',function(){
+    var f=E.file.files&&E.file.files[0];
+    if(!f) return;
+    say(E.msg,'ink','Reading '+esc(f.name)+' …');
+    readFile(f).then(function(text){
+      if(E.input) E.input.value=text;
+      readNow(text,esc(f.name));
+    },function(e){
+      say(E.msg,'bad','Refused. '+esc((e&&e.message)||'The file could not be read.'));
+    }).then(function(){ try{ E.file.value=''; }catch(e){} });   /* same file can be chosen twice */
+  });
+
+  on(E.read,'click',function(){ readNow(E.input?E.input.value:'','the pasted text'); });
+  on(E.merge,'click',function(){ commit('merge'); });
+  on(E.replace,'click',function(){ if(armed) commit('replace'); else arm(); });
+  on(E.cancel,'click',function(){
+    held=null; disarm();
+    if(E.pv){ E.pv.hidden=true; E.pv.innerHTML=''; }
+    if(E.doRow) E.doRow.hidden=true;
+    say(E.msg,'ink','Cancelled. Nothing was changed.');
+  });
+  on(E.revert,'click',revert);
+  on(E.rpdrop,'click',function(){ lsDel(RP_KEY); rpMeta=null; drawRP();
+    say(E.msg,'ink','Restore point discarded.'); });
+
+  /* a destructive control must not stay armed across a collapse or a
+     background/foreground round trip */
+  on(root,'toggle',function(){ if(!root.open) disarm(); });
+
+  /* iOS: the software keyboard does not resize the layout viewport, so a
+     fixed bar sits on top of the field. Fold it away while typing. */
+  function kb(on_){ try{ document.documentElement.setAttribute('data-bk-kb',on_?'1':'0'); }catch(e){} }
+  [E.input,E.outta].forEach(function(ta){
+    if(!ta) return;
+    on(ta,'focus',function(){
+      kb(true);
+      setTimeout(function(){ try{ ta.scrollIntoView({block:'center'}); }catch(e){} },260);
+    });
+    on(ta,'blur',function(){ kb(false); });
+  });
+  if(window.visualViewport){
+    var vv=window.visualViewport;
+    var vvh=function(){
+      var shrunk=(vv.height/(window.innerHeight||vv.height))<0.75;
+      var live=document.activeElement;
+      kb(shrunk&&live&&/^(TEXTAREA|INPUT)$/.test(live.tagName||''));
+    };
+    vv.addEventListener('resize',vvh);
+    offs.push(function(){ vv.removeEventListener('resize',vvh); });
+  }
+
+  life=installLifecycle({
+    onSuspend:function(){ disarm(); if(o.onSuspend) o.onSuspend(); },
+    onResume:function(away){ disarm(); refresh(); if(o.onResume) o.onResume(away); }
+  });
+
+  loadRP();
+  refresh();
+
+  return {
+    refresh:refresh,
+    destroy:function(){
+      clearTimeout(armT);
+      offs.forEach(function(f){ f(); }); offs=[];
+      if(life) life.destroy();
+      kb(false);
+      held=null;
+      if(built&&mount) mount.innerHTML='';
+    }
+  };
+}
+
+/* the same fragment as the MARKUP section above, so the panel can build
+   itself when the integrator only gives it an empty mount */
+var TEMPLATE=
+'<details class="pn bk-root" data-bk-root>'+
+'<summary><span class="lbl">Backup</span><span class="lbl bk-hd" data-bk-sum>&mdash;</span></summary>'+
+'<div class="pn-bd bk-bd">'+
+'<div class="bk-gauges">'+
+'<div class="bk-g"><span class="lbl">Sessions</span><b data-bk-gs>0</b><span class="bk-cap" data-bk-gsc>&nbsp;</span></div>'+
+'<div class="bk-g"><span class="lbl">Sets</span><b data-bk-gt>0</b><span class="bk-cap" data-bk-gtc>&nbsp;</span></div>'+
+'<div class="bk-g"><span class="lbl">Span</span><b data-bk-gp>&mdash;</b><span class="bk-cap">first to last</span></div>'+
+'<div class="bk-g"><span class="lbl">File</span><b data-bk-gb>&mdash;</b><span class="bk-cap">json, measured</span></div>'+
+'</div><hr class="sep">'+
+'<div class="bk-sec">'+
+'<div class="bk-row"><span class="lbl">Export</span><span class="bk-acts">'+
+'<button class="btn" type="button" data-bk-xj>Export JSON</button>'+
+'<button class="btn" type="button" data-bk-xc>Export CSV</button></span></div>'+
+'<p class="bk-note" data-bk-xnote></p>'+
+'<div data-bk-outwrap hidden><div class="bk-row bk-outhd"><span class="lbl" data-bk-outlbl>JSON</span>'+
+'<span class="bk-acts"><button class="btn" type="button" data-bk-copy>Copy</button>'+
+'<button class="btn" type="button" data-bk-outclose>Close</button></span></div>'+
+'<textarea class="bk-ta" data-bk-outta spellcheck="false" autocapitalize="off" autocorrect="off" '+
+'autocomplete="off" aria-label="Backup text to copy"></textarea></div>'+
+'<p class="bk-msg" data-bk-xmsg hidden></p></div><hr class="sep">'+
+'<div class="bk-sec">'+
+'<div class="bk-row"><span class="lbl">Restore</span><span class="bk-acts">'+
+'<label class="btn" data-bk-pick>Choose file</label>'+
+'<button class="btn" type="button" data-bk-read>Read backup</button></span></div>'+
+'<input class="bk-sr" type="file" data-bk-file accept="application/json,.json,text/json,text/plain,.txt">'+
+'<textarea class="bk-ta" data-bk-in placeholder="Paste backup JSON" spellcheck="false" '+
+'autocapitalize="off" autocorrect="off" autocomplete="off" aria-label="Backup JSON to restore"></textarea>'+
+'<p class="bk-msg" data-bk-msg hidden></p>'+
+'<div class="bk-pv" data-bk-pv hidden></div>'+
+'<div class="bk-do" data-bk-do hidden>'+
+'<button class="btn" type="button" data-bk-merge>Merge</button>'+
+'<button class="btn" type="button" data-bk-replace>Replace</button>'+
+'<button class="btn" type="button" data-bk-cancel>Cancel</button></div>'+
+'<p class="bk-warn" data-bk-armwarn hidden></p>'+
+'<div class="bk-rp" data-bk-rp hidden><div><span class="lbl">Restore point</span>'+
+'<span class="bk-rpt" data-bk-rpt></span></div>'+
+'<span class="bk-acts"><button class="btn" type="button" data-bk-revert>Revert</button>'+
+'<button class="btn" type="button" data-bk-rpdrop>Discard</button></span></div>'+
+'</div></div></details>';
+
+initBackup.SCHEMA=SCHEMA;
+initBackup.APP=APP;
+initBackup.envelope=envelope;
+initBackup.validate=validate;
+initBackup.mergeStates=mergeStates;
+initBackup.statsOf=statsOf;
+initBackup.installLifecycle=installLifecycle;
+initBackup.safeStorage={
+  available:lsOk, get:lsGet, set:lsSet, remove:lsDel,
+  /* JSON in one step; a missing or corrupt value returns the fallback rather
+     than throwing, so the page renders correctly with no stored value */
+  getJSON:function(k,fallback){ var raw=lsGet(k); if(!raw) return fallback;
+    try{ var v=JSON.parse(raw); return v==null?fallback:v; }catch(e){ return fallback; } },
+  setJSON:function(k,v){ try{ return lsSet(k,JSON.stringify(v)); }catch(e){ return false; } }
+};
+
+window.initBackup=initBackup;
+})();
+
+</script>
+<script>
 /* ============================================================================
    COMPONENTS + SHELL — fader, timer, masthead, log, settings, wiring.
    ========================================================================= */
@@ -1739,65 +4899,6 @@ function initTimer(o){
     next:t=>{ mount.querySelector('[data-next]').innerHTML=t||''; }};
 }
 
-/* ============================ MASTHEAD ============================ */
-let mastBuilt=false;
-function renderMast(mount,m){
-  if(!mastBuilt){
-    mount.innerHTML=
-      '<div class="mh-sig"></div>'+
-      '<div class="mh-top">'+
-        '<div class="mh-mark"><div class="wordmark">ONE&middot;BELL</div>'+
-          '<div class="plate">Type 1 &middot; Single bell &middot; Rev 2</div></div>'+
-        '<div class="mh-gauges" data-g></div>'+
-      '</div>'+
-      '<div class="mh-strip">'+
-        '<div class="mh-grille" aria-hidden="true"></div>'+
-        '<div class="mix" data-mix role="img" aria-label="Session progress by exercise"></div>'+
-      '</div>';
-    const g=mount.querySelector('[data-g]');
-    [['date','Date'],['elapsed','Elapsed'],['burn','Burn'],['bell','Bell'],['sets','Sets']].forEach(([k,l])=>{
-      const c=el('div','mh-g'); c.dataset.k=k;
-      c.appendChild(el('span','lbl',l));
-      c.appendChild(el('b',null,'—'));
-      c.appendChild(el('span','mh-cap',''));
-      g.appendChild(c);
-    });
-    mastBuilt=true;
-  }
-  const cell=(k,v,cap,flag)=>{
-    const c=mount.querySelector('.mh-g[data-k="'+k+'"]');
-    c.querySelector('b').textContent=v;
-    const capEl=c.querySelector('.mh-cap'); capEl.innerHTML='';
-    if(cap) capEl.appendChild(document.createTextNode(cap));
-    if(flag) capEl.appendChild(el('span','mh-flag '+flag[1],flag[0]));
-  };
-  cell('date',m.date,'');
-  /* §9 — elapsed is a measurement only once a set exists to measure from */
-  cell('elapsed', m.elapsedMeasured? m.elapsedMin+' / '+m.targetMin : '— / '+m.targetMin,
-       m.elapsedMeasured?'min':'not started',
-       m.elapsedMeasured?['measured','ok']:null);
-  /* §9 — an estimate never wears a measurement's costume */
-  cell('burn', m.kcal==null?'—':String(m.kcal), m.kcal==null?'no time yet':'kcal · MET '+(+m.met).toFixed(1),
-       m.kcal==null?null:['estimated','est']);
-  cell('bell',m.bell.label,m.bell.range);
-  cell('sets',m.setsDone+' / '+m.setsTotal, m.currentExercise||'complete',
-       m.projectedEndMin?['ends ~'+m.projectedEndMin+'m','est']:null);
-
-  const mix=mount.querySelector('[data-mix]');
-  const total=m.bands.reduce((a,b)=>a+b.sets,0)||1;
-  if(mix.children.length!==m.bands.length){
-    mix.innerHTML='';
-    m.bands.forEach(()=>{ const i=el('i'); i.appendChild(el('span')); mix.appendChild(i); });
-  }
-  m.bands.forEach((b,n)=>{
-    const i=mix.children[n];
-    i.style.width=(b.sets/total*100)+'%';
-    i.dataset.active=b.active?'1':'0';
-    i.title=b.name+' — '+b.done+' of '+b.sets;
-    i.firstChild.style.width=Math.min(100,(b.done/b.sets)*100)+'%';
-  });
-}
-
 /* ============================ LOG ============================ */
 function renderToday(mount,m){
   mount.innerHTML='';
@@ -1864,7 +4965,230 @@ function renderHistory(mount,rows){
   }
 }
 
-window.UI={initTimer,renderMast,renderToday,renderHistory,coalesce,pinScroll,el,$,clock,num};
+window.UI={initTimer,renderToday,renderHistory,coalesce,pinScroll,el,$,clock,num};
+})();
+
+</script>
+<script>
+
+(function(){
+"use strict";
+
+/* ---------------------------------------------------------------------------
+   PACE THRESHOLD — §9 "refuse rather than guess"
+
+   REMAINING is withheld entirely until 2 sets have been logged. One set gives
+   a single timestamp measured from a session start that includes changing,
+   loading the bell and reading the plan — it is setup time wearing the costume
+   of a working pace, and multiplying it by 17 remaining sets produces a number
+   that is wrong by minutes. Two sets give a real set-to-set interval. Below the
+   threshold the cell shows an em dash and says what it is waiting for; it never
+   shows 0, and it never shows a guess.
+--------------------------------------------------------------------------- */
+var MIN_SETS_FOR_PACE = 2;
+
+var CELLS = ["date","elapsed","remaining","burn","bell","sets"];
+var LABEL = {date:"Date",elapsed:"Elapsed",remaining:"Remaining",
+             burn:"Burn",bell:"Bell",sets:"Sets"};
+var LEAD  = {elapsed:1,remaining:1};
+
+var DASH = "—";
+
+function esc(s){ return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+function num(v){ return typeof v==="number" && isFinite(v); }
+function pad2(n){ return (n<10?"0":"")+n; }
+function mmss(sec){ sec=Math.max(0,Math.round(sec)); return Math.floor(sec/60)+":"+pad2(sec%60); }
+
+/* write only on change — renderMast runs on every state change and on a 20s
+   tick, and rewriting identical text costs a needless paint */
+function put(node,v){ if(node && node.textContent!==v) node.textContent=v; }
+function flag(node,text,prov){
+  if(!node) return;
+  put(node, text||"");
+  if(prov){ if(node.getAttribute("data-p")!==prov) node.setAttribute("data-p",prov); }
+  else if(node.hasAttribute("data-p")) node.removeAttribute("data-p");
+}
+
+/* --- skeleton ------------------------------------------------------------ */
+/* Built once per mount and cached on the element. If the MARKUP fragment is
+   already in the page this adopts it instead of rebuilding, so the first paint
+   is correct with no JS flash. Nothing here re-runs on later calls: the level
+   strip in particular must survive, or its --t-slow band transitions die. */
+function cellHTML(k){
+  return '<div class="mh-g" data-k="'+k+'"'+(LEAD[k]?" data-lead":"")+'>'+
+           '<span class="lbl mh-lbl">'+esc(LABEL[k])+'</span>'+
+           '<b class="mh-val"><span data-v>'+DASH+'</span><i class="mh-u" data-u></i></b>'+
+           '<span class="mh-cap" data-c></span>'+
+           '<span class="mh-flag" data-f></span>'+
+         '</div>';
+}
+
+function ensure(mount){
+  var refs = mount.__mh;
+  if(refs && refs.grid && mount.contains(refs.grid)) return refs;
+
+  if(!mount.querySelector("[data-mh-grid]")){
+    mount.innerHTML =
+      '<div class="mh-sig" aria-hidden="true"></div>'+
+      '<div class="mh-top">'+
+        '<div class="mh-mark">'+
+          '<div class="wordmark mh-word">ONE&middot;BELL</div>'+
+          '<div class="plate mh-plate">Type 1 &middot; Single bell &middot; Rev 2</div>'+
+        '</div>'+
+        '<div class="mh-gauges">'+
+          '<div class="mh-grid" data-mh-grid role="group" aria-label="Session readout"></div>'+
+        '</div>'+
+      '</div>'+
+      '<div class="mh-strip">'+
+        '<div class="mh-grille" aria-hidden="true"></div>'+
+        '<div class="mh-mix mh-noanim" data-mh-mix role="img" aria-label="Session progress by exercise"></div>'+
+      '</div>'+
+      '<div class="mh-edge" aria-hidden="true"></div>';
+  }
+
+  var grid = mount.querySelector("[data-mh-grid]");
+  var i, k;
+  for(i=0;i<CELLS.length;i++){
+    k = CELLS[i];
+    if(!grid.querySelector('.mh-g[data-k="'+k+'"]')) grid.insertAdjacentHTML("beforeend", cellHTML(k));
+  }
+
+  refs = {grid:grid, mix:mount.querySelector("[data-mh-mix]"), cells:{}, sig:null, first:true};
+  for(i=0;i<CELLS.length;i++){
+    k = CELLS[i];
+    var c = grid.querySelector('.mh-g[data-k="'+k+'"]');
+    refs.cells[k] = {v:c.querySelector("[data-v]"), u:c.querySelector("[data-u]"),
+                     c:c.querySelector("[data-c]"), f:c.querySelector("[data-f]")};
+  }
+  mount.__mh = refs;
+  return refs;
+}
+
+function write(refs,k,v,unit,cap,fText,fProv){
+  var c = refs.cells[k]; if(!c) return;
+  put(c.v, v); put(c.u, unit||""); put(c.c, cap||"");
+  flag(c.f, fText, fProv);
+}
+
+/* --- render -------------------------------------------------------------- */
+function renderMast(mount, m){
+  if(!mount || !m) return;
+  var refs = ensure(mount);
+
+  var done  = num(m.setsDone)  ? m.setsDone  : 0;
+  var total = num(m.setsTotal) ? m.setsTotal : 0;
+  var left  = Math.max(0, total - done);
+  var target= num(m.targetMin) ? m.targetMin : 0;
+  var measured = !!m.elapsedMeasured;
+  var elapsed  = num(m.elapsedMin) ? m.elapsedMin : 0;
+
+  /* DATE — a fact off the log, no provenance flag */
+  write(refs,"date", m.date||DASH, "",
+        done===0 ? "not started" : (left===0 ? "complete" : "in progress"), "", "");
+
+  /* ELAPSED — a clock reading, so it is flagged measured. Before the first set
+     there is nothing to have measured, so it withholds rather than showing 0. */
+  if(measured){
+    var eV, eU;
+    if(elapsed>=90){ eV = Math.floor(elapsed/60)+":"+pad2(elapsed%60); eU = "hr"; }
+    else           { eV = String(elapsed);                             eU = "min"; }
+    write(refs,"elapsed", eV, eU,
+          (target && elapsed>target) ? ("+"+(elapsed-target)+" over target")
+                                     : (target ? "of "+target+" target" : ""),
+          "measured","ok");
+  } else {
+    write(refs,"elapsed", DASH, "", target ? "of "+target+" target" : "", "", "");
+  }
+
+  /* REMAINING — observed pace, never a plan.
+     Pace = real average seconds per LOGGED set. The model supplies paceSec when
+     core has the un-rounded figure; otherwise it is recovered from measured
+     elapsed time over sets done. Remaining = pace x sets left. */
+  var pace = null;
+  if(num(m.paceSec) && m.paceSec>0) pace = m.paceSec;
+  else if(measured && done>=MIN_SETS_FOR_PACE && elapsed>0) pace = (elapsed*60)/done;
+
+  if(left===0 && done>0){
+    /* not an estimate any more: nothing is left, and that is counted, not modelled */
+    write(refs,"remaining","0","min","session complete","measured","ok");
+  } else if(done < MIN_SETS_FOR_PACE){
+    /* §9 withheld. §8: the empty state carries the thing that fixes it. */
+    write(refs,"remaining", DASH, "",
+          done===0 ? "no sets logged" : "1 more set for pace", "", "");
+  } else {
+    var rem = null;
+    if(num(m.remainingMin) && m.remainingMin>=0) rem = m.remainingMin;
+    else if(pace!=null) rem = pace*left/60;
+    if(rem==null){
+      write(refs,"remaining", DASH, "", "no pace yet", "", "");
+    } else {
+      var r = Math.round(rem);
+      write(refs,"remaining", (r<1 ? "<1" : String(r)), "min",
+            pace!=null ? ("at "+mmss(pace)+" / set") : "at current pace",
+            "estimated","est");
+    }
+  }
+
+  /* BURN — a MET model, so it is flagged estimated and withheld until there is
+     measured time to compute it from */
+  if(num(m.kcal)){
+    write(refs,"burn", String(Math.round(m.kcal)), "kcal",
+          num(m.met) ? ("MET "+(+m.met).toFixed(1)) : "", "estimated","est");
+  } else {
+    write(refs,"burn", DASH, "", "no time yet", "", "");
+  }
+
+  /* BELL — configuration, not a derived number */
+  var bell = m.bell || {};
+  write(refs,"bell", bell.label||DASH, "", bell.range||"", "", "");
+
+  /* SETS — counted. No flag: the absence is itself information (§9). */
+  write(refs,"sets", done+" / "+total, "",
+        m.currentExercise || (left===0 && done>0 ? "complete" : ""), "", "");
+
+  /* --- level strip ------------------------------------------------------- */
+  var mix = refs.mix; if(!mix) return;
+  var bands = m.bands || [];
+  var sig = bands.map(function(b){ return b.k; }).join("|");
+
+  /* rebuild the band elements ONLY when the plan itself changes shape; a rebuild
+     on every call would restart every --t-slow width transition from zero */
+  if(refs.sig !== sig){
+    mix.innerHTML = "";
+    bands.forEach(function(){
+      var i = document.createElement("i");
+      i.appendChild(document.createElement("span"));
+      mix.appendChild(i);
+    });
+    refs.sig = sig;
+  }
+
+  var sum = bands.reduce(function(a,b){ return a + (b.sets||0); }, 0) || 1;
+  bands.forEach(function(b,n){
+    var i = mix.children[n]; if(!i) return;
+    var w = (b.sets/sum*100)+"%";
+    if(i.style.width !== w) i.style.width = w;
+    var act = b.active ? "1" : "0";
+    if(i.dataset.active !== act) i.dataset.active = act;
+    var t = b.name+" — "+b.done+" of "+b.sets;
+    if(i.title !== t) i.title = t;
+    var f = Math.max(0, Math.min(100, (b.done/(b.sets||1))*100))+"%";
+    if(i.firstChild.style.width !== f) i.firstChild.style.width = f;
+  });
+  mix.setAttribute("aria-label",
+    "Session progress: "+done+" of "+total+" sets logged"+
+    (m.currentExercise ? ", current exercise "+m.currentExercise : ""));
+
+  /* §6 no entrance animation: the first widths land with transitions off */
+  if(refs.first){
+    refs.first = false;
+    requestAnimationFrame(function(){ mix.classList.remove("mh-noanim"); });
+  }
+}
+
+window.renderMast = renderMast;
+if(window.UI) window.UI.renderMast = renderMast;
+
 })();
 
 </script>
@@ -1960,7 +5284,7 @@ function render(){
   /* one lamp lit: the control being operated */
   $('#app').dataset.live = resting?'timer':'fader';
 
-  U.renderMast($('#mast'), C.mastModel());
+  window.renderMast($('#mast'), C.mastModel());
 
   $('[data-pos]').textContent = done?'Session complete':'Exercise '+(sl.ei+1)+' of '+S().plan.length;
   $('[data-count]').textContent = c.entries.filter(e=>!e.skipped).length+' of '+L.length+' logged';
@@ -2028,6 +5352,8 @@ function render(){
     });
   }
 
+  const sc=C.mastModel().score;
+  $('[data-score]').textContent = sc==null ? 'No score yet' : 'Score '+sc;
   U.renderToday($('#today'), C.todayModel());
   U.renderHistory($('#hist'), C.historyRows());
   renderBar(done,resting);
@@ -2131,7 +5457,7 @@ function wire(){
     S().plan=C.DEFAULT_PLAN.map(e=>Object.assign({},e)); C.persist(); render(); });
   $('[data-export]').addEventListener('click',async()=>{ await C.exportFile('one-bell-log.csv'); });
 
-  setInterval(()=>{ if(!C.cur().done&&C.cur().entries.length) U.renderMast($('#mast'),C.mastModel()); },20000);
+  setInterval(()=>{ if(!C.cur().done&&C.cur().entries.length) window.renderMast($('#mast'),C.mastModel()); },20000);
 }
 
 C.loadLocal();
@@ -2151,6 +5477,27 @@ paintCaps(timer.caps());
 
 wire();
 render();
+
+/* cardio and backup are self-contained; the shell owns only their persistence */
+let cardioUI=null, backupUI=null;
+try{
+  cardioUI=window.initCardio({
+    mount:$('#p-cardio'),
+    getBodyMassLb:()=>+S().settings.bodyMass||185,
+    onLog:e=>{ C.logCardio(e); cardioUI&&cardioUI.render(C.cardio()); }
+  });
+  cardioUI&&cardioUI.render(C.cardio());
+}catch(e){}
+try{
+  backupUI=window.initBackup({
+    mount:$('#p-backup'),
+    getState:()=>S(),
+    applyState:(next,mode)=>{ const ok=C.applyState(next,mode); if(ok){ C.openSession(); render();
+      if(fader) fader.setStops(C.stops(),C.unit()); cardioUI&&cardioUI.render(C.cardio()); } return ok; },
+    csv:()=>C.csv(),
+    downloads:C.downloads()
+  });
+}catch(e){}
 
 C.hydrate(info=>{
   canExport=info.canExport;
