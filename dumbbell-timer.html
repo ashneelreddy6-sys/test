@@ -587,6 +587,11 @@ button,input,select,textarea{font-family:inherit;color:inherit}
 .lg-c[data-s="short"] .r{color:var(--warn)}
 .lg-c[data-s="short"] .w{color:var(--warn)}
 .lg-c[data-s="skipped"]{opacity:.42}
+/* how the set felt, as one letter: C clean, H hard, M max */
+.lg-d{font-weight:700}
+.lg-c[data-d="clean"] .lg-d{color:var(--ok)}
+.lg-c[data-d="hard"]  .lg-d{color:var(--warn)}
+.lg-c[data-d="max"]   .lg-d{color:var(--bad)}
 .lg-proj{margin-top:6px;font-size:9.5px;color:var(--grey);display:flex;align-items:center;gap:6px;flex-wrap:wrap}
 .lg-proj b{font-weight:700;color:var(--ink-2);font-variant-numeric:tabular-nums}
 .lg-tag{font-size:8.5px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--warn)}
@@ -637,7 +642,20 @@ details.pn[open] > summary{border-bottom:1px solid var(--line);box-shadow:0 1px 
   border-top:1px solid var(--line);box-shadow:0 -1px 0 var(--hilite) inset, var(--sh-2);
   padding:9px max(12px,env(safe-area-inset-right)) max(9px,env(safe-area-inset-bottom)) max(12px,env(safe-area-inset-left));
 }
-.actionbar-in{max-width:1280px;margin:0 auto;display:flex;gap:7px;align-items:stretch}
+.actionbar-in{max-width:1280px;margin:0 auto;display:flex;flex-direction:column;gap:7px}
+.ab-marks{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}
+.ab-mark{flex-direction:column;gap:1px;min-height:60px;padding:8px 6px;letter-spacing:.06em}
+.ab-mark .k{font-size:var(--fs-action,17px);font-weight:700;letter-spacing:.06em;text-transform:uppercase;line-height:1.1}
+.ab-mark .s{font-size:var(--fs-micro,10px);font-weight:400;letter-spacing:.02em;text-transform:none;color:var(--grey)}
+.ab-mark.sig .s{color:var(--signal);opacity:.85}
+.ab-wide{min-height:60px;flex-direction:column;gap:1px}
+.ab-wide .k{font-size:var(--fs-action,17px);font-weight:700;letter-spacing:.09em;text-transform:uppercase}
+.ab-wide .s{font-size:var(--fs-micro,12px);font-weight:400;letter-spacing:0;text-transform:none;
+  color:var(--ink-2);font-variant-numeric:tabular-nums}
+.ab-row{display:flex;align-items:center;gap:10px}
+.ab-min{min-height:36px;padding:6px 12px;font-size:var(--fs-micro,10px)}
+.ab-load{flex:1;text-align:center;font-size:var(--fs-body,12px);color:var(--ink-2);
+  font-variant-numeric:tabular-nums;letter-spacing:.02em}
 .ab-main{
   flex:1;min-height:52px;font-size:13px;font-weight:700;letter-spacing:.11em;
   text-transform:uppercase;gap:11px;
@@ -647,7 +665,7 @@ details.pn[open] > summary{border-bottom:1px solid var(--line);box-shadow:0 1px 
   color:var(--ink-2);font-variant-numeric:tabular-nums;
 }
 .ab-side{flex:0 0 auto;min-width:56px;min-height:52px;font-size:9px;line-height:1.25;flex-direction:column;gap:1px}
-body{padding-bottom:104px}
+body{padding-bottom:150px}
 
 /* ---------------------------------------------------------- coarse targets
    §7: a 44px target taken with an invisible overlay so the machined part keeps
@@ -775,9 +793,21 @@ body{padding-bottom:104px}
 
 <div class="actionbar">
   <div class="actionbar-in">
-    <button class="btn ab-side" type="button" data-undo>Undo</button>
-    <button class="btn sig ab-main" type="button" data-main>Log set</button>
-    <button class="btn ab-side" type="button" data-skip>Skip<br>set</button>
+    <div class="ab-marks" data-marks>
+      <button class="btn sig ab-mark" type="button" data-diff="clean">
+        <span class="k">Clean</span><span class="s">3+ left</span></button>
+      <button class="btn ab-mark" type="button" data-diff="hard">
+        <span class="k">Hard</span><span class="s">1&ndash;2 left</span></button>
+      <button class="btn ab-mark" type="button" data-diff="max">
+        <span class="k">Max</span><span class="s">nothing left</span></button>
+    </div>
+    <button class="btn sig ab-wide" type="button" data-main hidden>
+      <span class="k" data-mainlabel>Skip rest</span><span class="s" data-sub></span></button>
+    <div class="ab-row">
+      <button class="btn ab-min" type="button" data-undo>Undo</button>
+      <span class="ab-load" data-load></span>
+      <button class="btn ab-min" type="button" data-skip>Skip set</button>
+    </div>
   </div>
 </div>
 
@@ -807,13 +837,13 @@ const DEFAULT_PLAN=[
   {id:'goblet',name:'Goblet squat',      sets:3,reps:10,perSide:false,start:25,
    note:'Bell at the chest, elbows inside the knees.'},
   {id:'row',   name:'One-arm row',       sets:3,reps:10,perSide:true, start:25,
-   note:'Free hand braced. Hips square; the pull comes from the shoulder blade.'},
+   note:'Free hand braced on a chair. Hips square; the pull comes from the shoulder blade, not the twist.'},
   {id:'floor', name:'Floor press',       sets:3,reps:10,perSide:true, start:25,
-   note:'Upper arm touches the floor and stops. That pause is the rep.'},
+   note:'One arm at a time. Upper arm touches the floor and stops \u2014 that pause is the rep. Free hand out wide to stop the roll.'},
   {id:'rdl',   name:'Romanian deadlift', sets:3,reps:10,perSide:true, start:30,
-   note:'Hips back, bell close to the shins. Stop before the back rounds.'},
+   note:'Bell in one hand, both feet down. Hips back, shoulders square \u2014 the load is trying to twist you, and not letting it is half the lift.'},
   {id:'ohp',   name:'Overhead press',    sets:3,reps:8, perSide:true, start:15,
-   note:'Ribs down. Leaning back to finish means the bell is too heavy.'}
+   note:'Ribs down, glutes tight. Do not let the free side lean away to get under it \u2014 that is the rep escaping, not finishing.'}
 ];
 
 const DEFAULTS={
@@ -821,7 +851,7 @@ const DEFAULTS={
             rest:90,sideRest:0,target:40,bodyMass:185,met:5,
             sound:true,vibe:true,wake:true},
   plan:DEFAULT_PLAN.map(e=>Object.assign({},e)),
-  weights:{}, sessions:[], current:null, planRev:2, updatedAt:0
+  weights:{}, sessions:[], cardio:[], current:null, planRev:2, updatedAt:0
 };
 
 let S=JSON.parse(JSON.stringify(DEFAULTS));
@@ -852,6 +882,7 @@ function loadLocal(){
   }
   if(!S.weights||typeof S.weights!=='object') S.weights={};
   if(!Array.isArray(S.sessions)) S.sessions=[];
+  if(!Array.isArray(S.cardio)) S.cardio=[];
 }
 function saveLocal(){ try{ localStorage.setItem(LS,JSON.stringify(S)); }catch(e){} }
 
@@ -927,6 +958,10 @@ const cursor=()=>cur().entries.length;
 const slotAt=i=>{const L=slots();return i<L.length?L[i]:null;};
 const finished=()=>cursor()>=slots().length;
 
+/* One tap logs the set AND how it felt. Three marks, mapped to reps-in-reserve:
+   clean = 3+ left, hard = 1-2 left, max = nothing left or form broke. */
+const DIFF={clean:{rir:3,label:'Clean'},hard:{rir:1.5,label:'Hard'},max:{rir:0,label:'Max'}};
+
 function newSession(){ return {id:'s'+Date.now().toString(36),date:todayKey(),startedAt:Date.now(),
   endedAt:null,done:false,entries:[],unit:unit(),updatedAt:Date.now()}; }
 
@@ -971,9 +1006,13 @@ function mastModel(){
   const measured=logged>0;
   const elapsedMin=measured?Math.round(((c.endedAt||Date.now())-c.startedAt)/60000):0;
   /* §9: refuse rather than guess. No finish estimate until two sets give a real pace. */
-  let projectedEndMin=null;
+  /* Remaining is measured pace x sets left. Two sets is the floor: one set
+     gives a pace of "however long you happened to take", which is not a pace. */
+  let remainingMin=null, paceSec=null, projectedEndMin=null;
   if(logged>=2&&!c.done){
     const perSet=(Date.now()-c.startedAt)/logged;
+    paceSec=Math.round(perSet/1000);
+    remainingMin=Math.max(0,Math.round((perSet*(L.length-logged))/60000));
     projectedEndMin=Math.round((perSet*L.length)/60000);
   }
   const p=PROFILES[S.settings.profile]||PROFILES.smartbell;
@@ -988,6 +1027,8 @@ function mastModel(){
     bell:{label:p.short||'CUST', range:st[0]+'–'+st[st.length-1]+' '+unit()},
     elapsedMin, targetMin:+S.settings.target||25, elapsedMeasured:measured, projectedEndMin,
     setsDone:logged, setsTotal:L.length, kcal, met,
+    remainingMin, paceSec,
+    score: (window.SCORE&&logged) ? window.SCORE.sessionScore(c.entries,{bodyLb:+S.settings.bodyMass||185}).score : null,
     currentExercise: sl?S.plan[sl.ei].name:null,
     bands:S.plan.map((ex,ei)=>({
       k:ex.id, name:ex.name, sets:ex.sets*(ex.perSide?2:1),
@@ -1013,7 +1054,7 @@ function todayModel(){
           else if(isNow) state='current';
           cells.push({set:s+1,side,state,
             weight:e?e.weight:(isNow?S.weights[ex.id]:null),
-            reps:e?e.reps:null, target:ex.reps});
+            reps:e?e.reps:null, target:ex.reps, diff:e?(e.diff||null):null});
         });
       }
       const v=verdict(ex);
@@ -1048,12 +1089,35 @@ function csv(){
   return rows.map(r=>r.map(v=>/[",\n]/.test(String(v))?'"'+String(v).replace(/"/g,'""')+'"':v).join(',')).join('\n');
 }
 
+/* Applied by the backup panel after IT has validated the payload. */
+function applyState(next,mode){
+  if(!next||typeof next!=='object') return false;
+  if(mode==='replace'){
+    S=Object.assign({},DEFAULTS,next);
+    S.settings=Object.assign({},DEFAULTS.settings,next.settings||{});
+  }else{
+    const byId={}; (S.sessions||[]).forEach(x=>byId[x.id]=x);
+    (next.sessions||[]).forEach(x=>{ if(!x||!x.id) return;
+      const mine=byId[x.id];
+      if(!mine||(x.updatedAt||0)>(mine.updatedAt||0)) byId[x.id]=x; });
+    S.sessions=Object.values(byId).sort((a,b)=>(a.startedAt||0)-(b.startedAt||0));
+    const cByTs={}; (S.cardio||[]).forEach(x=>cByTs[x.ts]=x);
+    (next.cardio||[]).forEach(x=>{ if(x&&x.ts) cByTs[x.ts]=x; });
+    S.cardio=Object.values(cByTs).sort((a,b)=>(a.ts||0)-(b.ts||0));
+  }
+  loadLocal.sanitize&&loadLocal.sanitize();
+  persist(); return true;
+}
+
 window.CORE={
-  PROFILES, DEFAULT_PLAN,
+  PROFILES, DEFAULT_PLAN, DIFF,
   state:()=>S, persist, loadLocal, hydrate,
   stops, unit, snap, snapIdx, stepStop, nextStop,
   slots, cur, cursor, slotAt, finished, openSession, newSession, primeWeights, verdict,
-  mastModel, todayModel, historyRows, csv, fmtDate, todayKey,
+  mastModel, todayModel, historyRows, csv, fmtDate, todayKey, applyState,
+  logCardio:e=>{ S.cardio.push(e); persist(); },
+  cardio:()=>S.cardio,
+  downloads:()=>DL,
   exportFile:async n=>{ if(!DL) return false; try{ await DL.save({filename:n,data:csv()}); return true; }catch(e){ return false; } }
 };
 })();
@@ -1753,7 +1817,11 @@ function renderToday(mount,m){
                  : c.state==='pending' ? (c.side?c.side+' · ':'')+'set '+c.set
                  : c.state==='current' ? (c.side?c.side+' · ':'')+'current'
                  : (c.side?c.side+' · ':'')+c.reps+'/'+c.target;
-      n.appendChild(w); n.appendChild(el('div','r',rTxt));
+      n.appendChild(w);
+      const rl=el('div','r',rTxt);
+      if(c.diff) rl.appendChild(el('span','lg-d','\u00a0'+c.diff.charAt(0).toUpperCase()));
+      n.appendChild(rl);
+      if(c.diff) n.dataset.d=c.diff;
       cells.appendChild(n);
     });
     b.appendChild(cells);
@@ -1849,13 +1917,15 @@ function paintCaps(c){
 function curEx(){ const sl=C.slotAt(C.cursor()); return sl?S().plan[sl.ei]:null; }
 function reps(){ const ex=curEx(); if(!ex) return 0; return pendingReps!=null?pendingReps:ex.reps; }
 
-function logSet(skipped){
+function logSet(diff){
+  const skipped = diff===null;
   if(timer) timer.unlock();
   if(C.finished()) return;
   const sl=C.slotAt(C.cursor()); if(!sl) return;
   const ex=S().plan[sl.ei], c=C.cur(), r=skipped?0:reps();
   c.entries.push({ex:ex.id,name:ex.name,set:sl.s+1,side:sl.side,
-    weight:S().weights[ex.id],unit:C.unit(),reps:r,target:ex.reps,skipped:!!skipped,ts:Date.now()});
+    weight:S().weights[ex.id],unit:C.unit(),reps:r,target:ex.reps,
+    diff:skipped?null:diff, skipped:!!skipped, ts:Date.now()});
   c.unit=C.unit(); c.updatedAt=Date.now();
   if(!S().sessions.some(s=>s.id===c.id)) S().sessions.push(c);
   pendingReps=null;
@@ -1965,17 +2035,15 @@ function render(){
 }
 
 function renderBar(done,resting){
-  const p=$('[data-main]');
-  p.innerHTML='';
-  if(done) p.appendChild(el('span',null,'Start next session'));
-  else if(resting){
-    p.appendChild(el('span',null,'Skip rest'));
-    const s=el('span','sub'); s.dataset.sub='1'; s.textContent=clock(timer.left()); p.appendChild(s);
-  }else{
-    const ex=curEx();
-    p.appendChild(el('span',null,'Log set'));
-    if(ex){ const s=el('span','sub'); s.textContent=num(S().weights[ex.id])+' '+C.unit()+' × '+reps(); p.appendChild(s); }
+  const marks=$('[data-marks]'), wide=$('[data-main]');
+  const showMarks = !done && !resting;
+  marks.hidden=!showMarks; wide.hidden=showMarks;
+  if(!showMarks){
+    $('[data-mainlabel]').textContent = done?'Start next session':'Skip rest';
+    $('[data-sub]').textContent = done?'':clock(timer.left());
   }
+  const ex=curEx();
+  $('[data-load]').textContent = (showMarks&&ex) ? num(S().weights[ex.id])+' '+C.unit()+' × '+reps()+' reps' : '';
   $('[data-undo]').disabled=!C.cur().entries.length;
   $('[data-skip]').disabled=done||resting;
 }
@@ -2022,10 +2090,14 @@ function wire(){
     if(timer) timer.unlock();
     if(C.finished()||C.cur().done) startNext();
     else if(timer&&timer.running()){ timer.stop(); render(); }
-    else logSet(false);
+  });
+  $('[data-marks]').addEventListener('click',e=>{
+    const b=e.target.closest('[data-diff]'); if(!b) return;
+    if(timer) timer.unlock();
+    if(!(timer&&timer.running())&&!C.finished()) logSet(b.dataset.diff);
   });
   $('[data-undo]').addEventListener('click',undo);
-  $('[data-skip]').addEventListener('click',()=>{ if(!(timer&&timer.running())&&!C.finished()) logSet(true); });
+  $('[data-skip]').addEventListener('click',()=>{ if(!(timer&&timer.running())&&!C.finished()) logSet(null); });
   $('[data-rdn]').addEventListener('click',()=>{ pendingReps=Math.max(0,reps()-1); render(); });
   $('[data-rup]').addEventListener('click',()=>{ pendingReps=Math.min(99,reps()+1); render(); });
 
