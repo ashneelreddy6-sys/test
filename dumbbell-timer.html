@@ -747,6 +747,8 @@ body{padding-bottom:104px}
           <div class="st-f"><label class="lbl" for="f-rest">Rest s</label><input id="f-rest" type="number" min="10" max="600" step="5" data-s="rest"></div>
           <div class="st-f"><label class="lbl" for="f-side">Swap s</label><input id="f-side" type="number" min="0" max="300" step="5" data-s="sideRest"></div>
           <div class="st-f"><label class="lbl" for="f-target">Target min</label><input id="f-target" type="number" min="5" max="120" step="5" data-s="target"></div>
+          <div class="st-f"><label class="lbl" for="f-mass">Body lb</label><input id="f-mass" type="number" min="60" max="500" step="1" data-s="bodyMass"></div>
+          <div class="st-f"><label class="lbl" for="f-met">Effort MET</label><input id="f-met" type="number" min="2" max="9" step="0.5" data-s="met"></div>
         </div>
 
         <div class="st-sw"><button class="pw" type="button" data-sw="sound" aria-pressed="true" aria-label="Sound"></button><span>Sound</span></div>
@@ -764,7 +766,8 @@ body{padding-bottom:104px}
           <span class="lbl">Panel</span>
           <button class="btn" type="button" data-theme-btn>Auto</button>
         </div>
-        <p class="sm grey" data-sync style="margin-top:11px">Stored on this device</p>
+        <p class="sm grey" style="margin-top:11px">Burn is a MET estimate from body mass and elapsed time — the model takes neither height nor age. Treat it as ±20&ndash;30%, and never eat it back at face value.</p>
+        <p class="sm grey" data-sync style="margin-top:7px">Stored on this device</p>
       </div>
     </details>
   </div>
@@ -792,7 +795,7 @@ const rng=(a,b,s)=>{const o=[];for(let v=a;v<=b+1e-9;v+=s)o.push(Math.round(v*10
 /* Real click-stops of real hardware. The 552's increment changes at 25 lb —
    2.5 below, 5 above — which the fader's scale is required to show. */
 const PROFILES={
-  bowflex552 :{name:'Bowflex SelectTech 552', short:'552',  unit:'lb', stops:[5,7.5,10,12.5,15,17.5,20,22.5,25,30,35,40,45,50,52.5]},
+  smartbell  :{name:'Flex Fitness SmartBell 52.5', short:'SMART', unit:'lb', stops:[5,7.5,10,12.5,15,17.5,20,22.5,25,30,35,40,45,50,52.5]},
   bowflex1090:{name:'Bowflex SelectTech 1090',short:'1090', unit:'lb', stops:rng(10,90,5)},
   nuobell    :{name:'NUOBELL 80',             short:'NUO',  unit:'lb', stops:rng(5,80,5)},
   powerblock :{name:'PowerBlock Sport 50',    short:'PB50', unit:'lb', stops:rng(5,50,5)},
@@ -805,19 +808,20 @@ const DEFAULT_PLAN=[
    note:'Bell at the chest, elbows inside the knees.'},
   {id:'row',   name:'One-arm row',       sets:3,reps:10,perSide:true, start:25,
    note:'Free hand braced. Hips square; the pull comes from the shoulder blade.'},
-  {id:'floor', name:'Floor press',       sets:3,reps:10,perSide:false,start:25,
+  {id:'floor', name:'Floor press',       sets:3,reps:10,perSide:true, start:25,
    note:'Upper arm touches the floor and stops. That pause is the rep.'},
-  {id:'rdl',   name:'Romanian deadlift', sets:3,reps:10,perSide:false,start:30,
+  {id:'rdl',   name:'Romanian deadlift', sets:3,reps:10,perSide:true, start:30,
    note:'Hips back, bell close to the shins. Stop before the back rounds.'},
-  {id:'ohp',   name:'Overhead press',    sets:3,reps:8, perSide:false,start:15,
+  {id:'ohp',   name:'Overhead press',    sets:3,reps:8, perSide:true, start:15,
    note:'Ribs down. Leaning back to finish means the bell is too heavy.'}
 ];
 
 const DEFAULTS={
-  settings:{profile:'bowflex552',unit:'lb',cmin:5,cmax:50,cstep:5,
-            rest:90,sideRest:0,target:25,sound:true,vibe:true,wake:true},
+  settings:{profile:'smartbell',unit:'lb',cmin:5,cmax:50,cstep:5,
+            rest:90,sideRest:0,target:40,bodyMass:185,met:5,
+            sound:true,vibe:true,wake:true},
   plan:DEFAULT_PLAN.map(e=>Object.assign({},e)),
-  weights:{}, sessions:[], current:null, updatedAt:0
+  weights:{}, sessions:[], current:null, planRev:2, updatedAt:0
 };
 
 let S=JSON.parse(JSON.stringify(DEFAULTS));
@@ -832,13 +836,20 @@ function loadLocal(){
     S.settings=Object.assign({},DEFAULTS.settings,d.settings);
   }catch(e){}
   /* trap 7: a saved value that no longer exists must fall back cleanly */
-  if(!PROFILES[S.settings.profile]) S.settings.profile='bowflex552';
+  if(S.settings.profile==='bowflex552') S.settings.profile='smartbell';   /* same stops, right name */
+  if(!PROFILES[S.settings.profile]) S.settings.profile='smartbell';
   if(!Array.isArray(S.plan)||!S.plan.length) S.plan=DEFAULT_PLAN.map(e=>Object.assign({},e));
   S.plan=S.plan.filter(e=>e&&e.id).map(e=>({
     id:String(e.id), name:String(e.name||'Exercise'),
     sets:Math.max(1,Math.min(10,+e.sets||3)), reps:Math.max(1,Math.min(50,+e.reps||10)),
     perSide:!!e.perSide, start:+e.start||20, note:e.note||''
   }));
+  /* one dumbbell: everything but the goblet squat became per-side in rev 2 */
+  if((S.planRev||1)<2){
+    S.plan.forEach(e=>{ if(e.id!=='goblet') e.perSide=true; });
+    if(+S.settings.target===25) S.settings.target=40;   /* 27 slots no longer fit 25 min */
+    S.planRev=2;
+  }
   if(!S.weights||typeof S.weights!=='object') S.weights={};
   if(!Array.isArray(S.sessions)) S.sessions=[];
 }
@@ -885,7 +896,7 @@ async function hydrate(onReady){
 
 /* ------------------------------------------------------------- hardware */
 function stops(){
-  const p=PROFILES[S.settings.profile]||PROFILES.bowflex552;
+  const p=PROFILES[S.settings.profile]||PROFILES.smartbell;
   if(p.stops) return p.stops;
   const a=Math.max(0,+S.settings.cmin||5), b=Math.max(a,+S.settings.cmax||50),
         st=Math.max(.5,+S.settings.cstep||5);
@@ -965,13 +976,18 @@ function mastModel(){
     const perSet=(Date.now()-c.startedAt)/logged;
     projectedEndMin=Math.round((perSet*L.length)/60000);
   }
-  const p=PROFILES[S.settings.profile]||PROFILES.bowflex552;
+  const p=PROFILES[S.settings.profile]||PROFILES.smartbell;
   const st=stops();
+  /* MET model: kcal/min = MET x 3.5 x kg / 200. Body mass is the only
+     personal input it takes — height and age do not enter it. Refuse to
+     show a figure before there is measured time to compute it from. */
+  const met=+S.settings.met||5, kg=(+S.settings.bodyMass||185)*0.45359237;
+  const kcal = measured ? Math.round(met*3.5*kg/200*elapsedMin) : null;
   return {
     date:fmtDate(c.date),
     bell:{label:p.short||'CUST', range:st[0]+'–'+st[st.length-1]+' '+unit()},
     elapsedMin, targetMin:+S.settings.target||25, elapsedMeasured:measured, projectedEndMin,
-    setsDone:logged, setsTotal:L.length,
+    setsDone:logged, setsTotal:L.length, kcal, met,
     currentExercise: sl?S.plan[sl.ei].name:null,
     bands:S.plan.map((ex,ei)=>({
       k:ex.id, name:ex.name, sets:ex.sets*(ex.perSide?2:1),
@@ -1541,7 +1557,7 @@ function initTimer(o){
       '<div class="tm-ctl">'+
         '<button class="btn" data-m>&minus;15s</button>'+
         '<button class="btn" data-p>+15s</button>'+
-        '<button class="btn" data-r>Restart</button>'+
+        '<button class="btn" data-r>Start rest</button>'+
         '<span class="sp"></span>'+
       '</div>'+
       '<div class="tm-pre" data-pre><span class="lbl">Rest</span></div>'+
@@ -1628,17 +1644,22 @@ function initTimer(o){
 
   function start(sec){ if(sec<=0){ stop(); return; }
     T.on=true;T.paused=false;T.dur=sec;T.dl=Date.now()+sec*1000;T.lastBeep=-1;
-    readBtn.setAttribute('aria-pressed','false'); wake(true); tick(); loop(); }
+    readBtn.setAttribute('aria-pressed','false');
+    mount.querySelector('[data-r]').textContent='Restart';
+    wake(true); tick(); loop(); }
   function stop(){ T.on=false;T.paused=false;cancelAnimationFrame(raf);raf=null;clearTimeout(backstop);wake(false);
     band.style.width='0%'; stateEl.textContent='Ready'; stateEl.dataset.s='idle';
-    clockEl.textContent=clock(preset); }
+    clockEl.textContent=clock(preset);
+    mount.querySelector('[data-r]').textContent='Start rest'; }
   function toggle(){ if(!T.on) return;
     if(T.paused){ T.dl=Date.now()+T.left*1000; T.paused=false; readBtn.setAttribute('aria-pressed','false'); loop(); }
     else{ T.left=left(); T.paused=true; readBtn.setAttribute('aria-pressed','true'); }
     tick(); }
   function add(s){ T.dl+=s*1000; if(s>0)T.dur+=s; if(T.paused)T.left=Math.max(0,T.left+s); tick(); }
   function restart(){ T.dur=preset;T.dl=Date.now()+preset*1000;T.paused=false;T.lastBeep=-1;
-    T.on=true; readBtn.setAttribute('aria-pressed','false'); wake(true); tick(); loop(); }
+    T.on=true; readBtn.setAttribute('aria-pressed','false');
+    mount.querySelector('[data-r]').textContent='Restart';
+    wake(true); tick(); loop(); }
   function setPreset(s){ preset=s; paintPre(); if(!T.on) clockEl.textContent=clock(preset); }
 
   readBtn.addEventListener('click',()=>{ unlock(); toggle(); });
@@ -1670,7 +1691,7 @@ function renderMast(mount,m){
         '<div class="mix" data-mix role="img" aria-label="Session progress by exercise"></div>'+
       '</div>';
     const g=mount.querySelector('[data-g]');
-    [['date','Date'],['elapsed','Elapsed'],['bell','Bell'],['sets','Sets']].forEach(([k,l])=>{
+    [['date','Date'],['elapsed','Elapsed'],['burn','Burn'],['bell','Bell'],['sets','Sets']].forEach(([k,l])=>{
       const c=el('div','mh-g'); c.dataset.k=k;
       c.appendChild(el('span','lbl',l));
       c.appendChild(el('b',null,'—'));
@@ -1691,6 +1712,9 @@ function renderMast(mount,m){
   cell('elapsed', m.elapsedMeasured? m.elapsedMin+' / '+m.targetMin : '— / '+m.targetMin,
        m.elapsedMeasured?'min':'not started',
        m.elapsedMeasured?['measured','ok']:null);
+  /* §9 — an estimate never wears a measurement's costume */
+  cell('burn', m.kcal==null?'—':String(m.kcal), m.kcal==null?'no time yet':'kcal · MET '+(+m.met).toFixed(1),
+       m.kcal==null?null:['estimated','est']);
   cell('bell',m.bell.label,m.bell.range);
   cell('sets',m.setsDone+' / '+m.setsTotal, m.currentExercise||'complete',
        m.projectedEndMin?['ends ~'+m.projectedEndMin+'m','est']:null);
@@ -1964,7 +1988,7 @@ function renderSettings(){
   }
   sel.value=st.profile;
   $('[data-custom]').hidden = st.profile!=='custom';
-  ['cmin','cmax','cstep','rest','sideRest','target'].forEach(k=>{
+  ['cmin','cmax','cstep','rest','sideRest','target','bodyMass','met'].forEach(k=>{
     const n=$('[data-s="'+k+'"]'); if(n&&document.activeElement!==n) n.value=st[k]; });
   const u=$('[data-s="unit"]'); if(u) u.value=st.unit;
   ['sound','vibe','wake'].forEach(k=>
@@ -2011,7 +2035,7 @@ function wire(){
     if(fader) fader.setStops(C.stops(),C.unit());
     C.persist(); render();
   });
-  ['cmin','cmax','cstep','rest','sideRest','target'].forEach(k=>{
+  ['cmin','cmax','cstep','rest','sideRest','target','bodyMass','met'].forEach(k=>{
     $('[data-s="'+k+'"]').addEventListener('change',e=>{
       S().settings[k]=Math.max(0,+e.target.value||0);
       Object.keys(S().weights).forEach(x=>S().weights[x]=C.snap(S().weights[x]));
