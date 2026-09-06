@@ -821,6 +821,19 @@ input,select,textarea{font-size:16px}
 /* fader owned by 02-fader.css. Signal discipline stays here: when the timer
    is the live control the fader rail stops being the lit thing. */
 #app[data-live="timer"] .fd-fill{background:var(--ink-2)}
+
+/* The fader mounts bare into the console, so it inherited no gutter and ran
+   edge to edge while every sibling row sits at 12px. Give it the panel's own
+   rhythm, and open up the vertical stack: a 56px readout needs more than the
+   1px/5px it had, and the zone legends were 5px under the tick labels they
+   belong to, which read as one crowded block instead of two registers. */
+#fd-mount{padding:2px 12px 14px}
+#fd-mount .fd-read{padding:9px 0 13px}
+#fd-mount .fd-num{line-height:1}
+#fd-mount .fd-row{margin-top:4px}
+#fd-mount .fd-labs{margin-top:5px}
+#fd-mount .fd-zones{margin-top:12px}
+@media (min-width:760px){ #fd-mount{padding:2px 14px 16px} }
 .pn-carry{padding:0 12px 11px;font-size:9.5px;line-height:1.55;color:var(--grey);display:flex;gap:6px;flex-wrap:wrap;align-items:baseline}
 .pn-carry b{font-weight:700;color:var(--ink-2);font-variant-numeric:tabular-nums}
 
